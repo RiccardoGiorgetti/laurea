@@ -7,19 +7,22 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
 
-        /* LAYOUT */
+        /* LAYOUT GENERALE */
         body { 
-            margin: 0; padding: 0; overflow: hidden; background-color: #202124; 
+            margin: 0; padding: 0; 
+            overflow: hidden; 
+            background-color: #202124; 
             font-family: 'Segoe UI', sans-serif;
             user-select: none; -webkit-user-select: none;
-            touch-action: none;
-            display: flex; flex-direction: column; height: 100vh;
+            touch-action: none; -webkit-tap-highlight-color: transparent;
+            display: flex; flex-direction: column; 
+            height: 100vh; /* Occupa tutto lo schermo */
         }
         
         /* ZONA GIOCO (SOPRA) */
         #game-wrapper {
             position: relative;
-            flex: 1; /* Occupa tutto lo spazio disponibile */
+            flex-grow: 1; /* Occupa tutto lo spazio libero */
             width: 100%;
             background: #202124;
             overflow: hidden;
@@ -28,34 +31,36 @@
         
         canvas { display: block; width: 100%; height: 100%; }
 
-        /* ZONA CONTROLLI (SOTTO - NASCOSTA ALL'INIZIO) */
+        /* ZONA CONTROLLI (SOTTO) - ALZATA PER EVITARE MENU TELEFONO */
         #controls-area {
-            height: 140px; /* Altezza fissa per i bottoni */
+            height: 220px; /* Più alto per comodità */
             background: #111;
-            display: none; /* NASCOSTO DI DEFAULT */
-            align-items: center;
+            display: none; /* Nascosto all'inizio */
+            align-items: flex-start; /* Allinea bottoni in alto nel box */
             justify-content: space-around;
-            padding: 10px;
+            padding: 20px 10px 50px 10px; /* 50px DI SPAZIO SOTTO (SAFE ZONE) */
             box-sizing: border-box;
         }
 
         /* PULSANTI GIGANTI */
         .big-btn {
             width: 45%;
-            height: 100%;
-            border-radius: 15px;
-            border: 2px solid #555;
+            height: 120px; /* Altezza bottone fisico */
+            border-radius: 20px;
+            border: 4px solid #555;
             background: #333;
             color: #fff;
-            font-size: 30px;
+            font-size: 32px;
             font-weight: bold;
             font-family: 'VT323', monospace;
             display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 5px 0 #000;
+            box-shadow: 0 8px 0 #000;
+            transition: transform 0.1s;
         }
-        .big-btn:active { transform: translateY(5px); box-shadow: none; background: #555; }
-        .btn-green { border-color: #00ff41; color: #00ff41; } /* Salta verde */
-        .btn-blue { border-color: #00ffff; color: #00ffff; } /* Giù azzurro */
+        .big-btn:active { transform: translateY(8px); box-shadow: none; background: #444; }
+        
+        .btn-green { border-color: #00ff41; color: #00ff41; } /* Salta */
+        .btn-blue { border-color: #00ffff; color: #00ffff; } /* Giù */
         
         /* INTERFACCIA MENU */
         .ui-layer { 
@@ -65,35 +70,35 @@
             padding: 20px; box-sizing: border-box; text-align: center;
         }
 
-        h1 { color: #ff5555; font-size: 32px; margin: 0 0 10px 0; font-family: 'VT323', monospace; text-transform: uppercase; }
-        p { color: #9aa0a6; font-size: 16px; max-width: 400px; margin-bottom: 20px; }
+        h1 { color: #ff5555; font-size: 40px; margin: 0 0 10px 0; font-family: 'VT323', monospace; text-transform: uppercase; letter-spacing: 2px; }
+        p { color: #9aa0a6; font-size: 16px; max-width: 400px; margin-bottom: 30px; line-height: 1.4; }
 
         /* CLASSIFICA */
         #leaderboard { 
-            margin-top: 20px; width: 100%; max-width: 350px; 
-            border: 1px solid #555; padding: 15px; border-radius: 5px; 
-            background: #000; color: white;
-            min-height: 100px;
+            margin-top: 20px; width: 100%; max-width: 320px; 
+            border: 1px solid #555; padding: 15px; border-radius: 8px; 
+            background: #000; 
+            min-height: 120px;
         }
         .lb-row { 
             display: flex; justify-content: space-between; 
-            color: #fff; /* TESTO BIANCO */
-            font-family: 'VT323', monospace; font-size: 20px; 
+            color: #fff; font-family: 'VT323', monospace; font-size: 22px; 
             margin-bottom: 5px; border-bottom: 1px solid #333;
         }
-        .lb-row:first-child { color: #ffd700; font-weight: bold; }
+        .lb-row:first-child { color: #ffd700; }
 
         /* ELEMENTI FORM */
         button.menu-btn { 
             background: #8ab4f8; color: #202124; border: none; 
-            padding: 15px 40px; font-size: 24px; font-family: 'VT323', monospace;
+            padding: 15px 50px; font-size: 28px; font-family: 'VT323', monospace;
             border-radius: 4px; cursor: pointer; margin-top: 10px; font-weight: bold;
         }
         input { 
             background: transparent; border: none; border-bottom: 2px solid #8ab4f8;
-            color: white; font-size: 24px; padding: 5px; text-align: center;
-            width: 200px; margin-bottom: 15px; font-family: 'VT323', monospace;
+            color: white; font-size: 28px; padding: 5px; text-align: center;
+            width: 220px; margin-bottom: 20px; font-family: 'VT323', monospace;
         }
+        input:focus { outline: none; border-color: #00ff41; }
         .hidden { display: none !important; }
     </style>
 
@@ -103,7 +108,7 @@
 
         // --- INSERISCI QUI LE TUE CHIAVI ---
         const firebaseConfig = {
-            apiKey: "INCOLLA_QUI_API_KEY",
+            apiKey: "INCOLLA_LA_TUA_API_KEY",
             authDomain: "TUO-PROGETTO.firebaseapp.com",
             projectId: "TUO-PROGETTO",
             storageBucket: "TUO-PROGETTO.appspot.com",
@@ -112,16 +117,23 @@
         };
         // -----------------------------------
 
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
+        let db;
+        try {
+            const app = initializeApp(firebaseConfig);
+            db = getDatabase(app);
+        } catch (e) {
+            console.error("Firebase Error:", e);
+            alert("Errore Configurazione Firebase: " + e.message);
+        }
 
         // SALVATAGGIO
         window.saveScoreToDb = function(name, score) {
+            if(!db) return alert("Database non collegato!");
             const btn = document.getElementById('btn-save');
             btn.innerText = "Salvataggio..."; 
             btn.disabled = true;
             
-            push(ref(db, 'laurea_scores'), { 
+            push(ref(db, 'laurea_final'), { 
                 name: name, 
                 score: score, 
                 date: Date.now() 
@@ -131,42 +143,35 @@
                 location.reload();
             })
             .catch((e) => { 
-                // Mostra l'errore esatto
-                alert("❌ ERRORE: " + e.message + "\n\nControlla che le regole su Firebase siano 'true' e che le chiavi nel codice siano giuste."); 
+                alert("❌ ERRORE SALVATAGGIO: " + e.message + "\n\nVai su Firebase -> Database -> Regole e metti tutto a true!"); 
                 btn.disabled = false; 
-                btn.innerText = "Riprova"; 
+                btn.innerText = "RIPROVA"; 
             });
         };
 
         // CLASSIFICA
         window.loadLeaderboard = function() {
+            if(!db) return;
             const list = document.getElementById('lb-list');
-            // Mettiamo un timeout se non carica
-            const timeout = setTimeout(() => {
-                if(list.innerHTML.includes("Caricamento")) {
-                    list.innerHTML = "<div style='color:red'>Errore connessione DB</div>";
-                }
-            }, 5000);
-
-            const q = query(ref(db, 'laurea_scores'), orderByChild('score'), limitToLast(5));
+            
+            const q = query(ref(db, 'laurea_final'), orderByChild('score'), limitToLast(5));
             onValue(q, (snapshot) => {
-                clearTimeout(timeout);
                 list.innerHTML = "";
                 let data = [];
                 snapshot.forEach(c => data.push(c.val()));
-                data.sort((a,b) => b.score - a.score); // Ordine decrescente
+                data.sort((a,b) => b.score - a.score); 
                 
-                if(data.length === 0) list.innerHTML = "<div>Nessun record</div>";
+                if(data.length === 0) list.innerHTML = "<div style='text-align:center'>Nessun record</div>";
                 
                 data.forEach((entry, i) => {
                     const d = document.createElement('div');
                     d.className = 'lb-row';
                     let n = entry.name ? entry.name.substring(0, 8).toUpperCase() : "ANON";
-                    d.innerHTML = `<span>${i+1}. ${n}</span><span>${entry.score}</span>`;
+                    d.innerHTML = `<span>${i+1}.${n}</span><span>${entry.score}</span>`;
                     list.appendChild(d);
                 });
             }, (error) => {
-                list.innerHTML = `<div style='color:red'>Err: ${error.code}</div>`;
+                list.innerHTML = `<div style='color:red; font-size:14px'>Errore DB: ${error.code}</div>`;
             });
         };
         loadLeaderboard();
@@ -178,24 +183,24 @@
         <canvas id="gameCanvas"></canvas>
 
         <div id="start-screen" class="ui-layer">
-            <h1>🎓 DINO RUN:<br>LAUREA EDITION</h1>
-            <p>Connessione persa... Si corre verso la proclamazione!</p>
+            <h1>🎓 DINO RUN<br>LAUREA EDITION</h1>
+            <p>Corri verso la proclamazione!</p>
             <button class="menu-btn" onclick="startGame()">INIZIA</button>
             <div id="leaderboard">
-                <div style="text-align:center; border-bottom:1px solid #555; margin-bottom:10px;">TOP PLAYER</div>
+                <div style="text-align:center; border-bottom:1px solid #555; margin-bottom:5px; color:#aaa;">TOP PLAYERS</div>
                 <div id="lb-list">Caricamento...</div>
             </div>
         </div>
 
         <div id="lose-screen" class="ui-layer hidden">
             <h1 style="color:white">GAME OVER</h1>
-            <p style="font-size:40px; color:#00ff41; font-family:'VT323'; margin:10px;">SCORE: <span id="final-score">0</span></p>
+            <p style="font-size:50px; color:#00ff41; font-family:'VT323'; margin:10px;">SCORE: <span id="final-score">0</span></p>
             
             <input type="text" id="player-name" placeholder="IL TUO NOME" maxlength="10">
             <button id="btn-save" class="menu-btn" onclick="submitScore()">SALVA RECORD</button>
             
             <br>
-            <button onclick="resetGame()" style="background:none; border:none; color:#888; text-decoration:underline; margin-top:20px; font-size:16px; cursor:pointer;">Rigioca senza salvare</button>
+            <button onclick="resetGame()" style="background:none; border:none; color:#888; text-decoration:underline; margin-top:30px; font-size:18px; cursor:pointer;">Rigioca senza salvare</button>
         </div>
     </div>
 
@@ -210,10 +215,9 @@
         const imgFace = new Image();
         imgFace.src = 'face.png';
 
-        // MIGLIORA QUALITÀ IMMAGINE
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
-
+        // OTTIMIZZAZIONE GRAFICA
+        ctx.imageSmoothingEnabled = false; // Pixel art nitida per il corpo
+        
         // AUDIO
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playSound(type) {
@@ -229,20 +233,21 @@
                 osc.frequency.linearRampToValueAtTime(600, audioCtx.currentTime + 0.1);
                 gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
                 gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.1);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.1);
             } else if (type === 'score') {
                 osc.type = 'sine';
-                osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+                osc.frequency.setValueAtTime(1200, audioCtx.currentTime);
                 gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
                 gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.1);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.1);
             } else { // Die
                 osc.type = 'sawtooth';
                 osc.frequency.setValueAtTime(200, audioCtx.currentTime);
-                osc.frequency.linearRampToValueAtTime(50, audioCtx.currentTime + 0.3);
+                osc.frequency.linearRampToValueAtTime(50, audioCtx.currentTime + 0.4);
                 gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
+                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.4);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.4);
             }
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.3);
         }
 
         function resize() {
@@ -262,7 +267,7 @@
             x: 50, y: 0,
             w: 44, h: 47,
             standH: 47, crouchH: 30,
-            dy: 0, gravity: 0.7, jumpForce: -13,
+            dy: 0, gravity: 0.8, jumpForce: -14, // Salto un po' più alto
             grounded: false, crouching: false
         };
         let dino = { ...DINO };
@@ -295,65 +300,75 @@
             }
         }
 
-        // DISEGNO CACTUS E UCCELLO
-        function drawCactus(x, y, w, h) {
+        // DISEGNO DINO (Corpo Pixel + Faccia Tonda)
+        function drawDinoBody(x, y, w, h) {
             ctx.fillStyle = '#acacac';
-            // Fusto
-            ctx.fillRect(x + w/3, y, w/3, h);
-            // Braccio sx
-            ctx.fillRect(x, y + h*0.3, w/3, h*0.1);
-            ctx.fillRect(x, y + h*0.1, w/6, h*0.2);
-            // Braccio dx
-            ctx.fillRect(x + 2*w/3, y + h*0.4, w/3, h*0.1);
-            ctx.fillRect(x + w - w/6, y + h*0.2, w/6, h*0.2);
-        }
-
-        function drawBird(x, y, w, h) {
-            ctx.fillStyle = '#acacac';
-            // Corpo
-            ctx.fillRect(x, y+h/2, w, h/3);
-            // Ala (animata)
-            let wingOffset = (Math.floor(frame/10)%2===0) ? -h/2 : h/3;
-            ctx.fillRect(x+w/3, y+h/2+wingOffset, w/3, h/2);
-            // Testa
-            ctx.fillRect(x, y+h/3, w/3, h/3);
-        }
-
-        function drawDino(x, y, w, h) {
-            ctx.fillStyle = '#acacac';
-            // Corpo
-            ctx.fillRect(x, y, w, h);
             
-            // Faccia
-            let headSize = 35;
-            let headX = dino.crouching ? x + w - 10 : x + w/2 - 10;
-            let headY = dino.crouching ? y : y - 10;
+            // 1. CORPO E CODA
+            if(dino.crouching) {
+                // Corpo schiacciato
+                ctx.fillRect(x, y, 55, 30); 
+                ctx.fillRect(x-10, y+5, 10, 15); // Coda
+            } else {
+                // Corpo eretto
+                ctx.fillRect(x, y, 40, 30); 
+                ctx.fillRect(x-8, y+10, 8, 20); // Coda
+            }
+
+            // 2. GAMBE (Animazione)
+            let legFrame = Math.floor(frame / 5) % 2; // Zampetta veloce
+            let legY = y + (dino.crouching ? 30 : 30);
+            let legH = dino.crouching ? 5 : 17;
             
+            if(!dino.grounded) {
+                // Salto: gambe ferme
+                ctx.fillRect(x+5, legY, 6, 10);
+                ctx.fillRect(x+25, legY, 6, 10);
+            } else {
+                // Corsa
+                if(legFrame === 0) {
+                    ctx.fillRect(x+5, legY, 6, 10); // Sx giù
+                    ctx.fillRect(x+25, legY, 6, 4); // Dx su
+                } else {
+                    ctx.fillRect(x+5, legY, 6, 4); // Sx su
+                    ctx.fillRect(x+25, legY, 6, 10); // Dx giù
+                }
+            }
+
+            // 3. TESTA (La tua Faccia)
+            // Calcolo posizione in base se è abbassato o no
+            let headSize = 36;
+            let headX = dino.crouching ? x + 50 : x + 20;
+            let headY = dino.crouching ? y : y - 15;
+
             if(imgFace.complete && imgFace.naturalHeight !== 0) {
                 ctx.save();
                 ctx.beginPath();
                 ctx.arc(headX + headSize/2, headY + headSize/2, headSize/2, 0, Math.PI * 2);
                 ctx.clip();
+                // Abilita smoothing solo per la faccia
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
                 ctx.drawImage(imgFace, headX, headY, headSize, headSize);
                 ctx.restore();
+                ctx.imageSmoothingEnabled = false; // Torna a pixel per il resto
             } else {
-                ctx.fillStyle = 'red';
+                ctx.fillStyle = '#ff0000';
                 ctx.fillRect(headX, headY, headSize, headSize);
             }
         }
 
+        // LOOP GIOCO
         function startGame() {
             document.getElementById('start-screen').classList.add('hidden');
             document.getElementById('lose-screen').classList.add('hidden');
-            
-            // MOSTRA I CONTROLLI
-            document.getElementById('controls-area').style.display = 'flex';
+            document.getElementById('controls-area').style.display = 'flex'; // MOSTRA TASTI
             
             if(audioCtx.state === 'suspended') audioCtx.resume();
-            
-            score = 0; speed = 6; frame = 0; obstacles = [];
-            dino.y = 0; dino.dy = 0; dino.grounded = false; dino.crouching = false;
-            groundY = canvas.height - 20; 
+
+            score = 0; speed = 7; frame = 0; obstacles = [];
+            dino.y = 0; dino.dy = 0; dino.grounded = false;
+            groundY = canvas.height - 30; // Pavimento
             
             gameRunning = true;
             loop();
@@ -371,42 +386,56 @@
 
             frame++;
             if(frame % 5 === 0) score++;
-            if(score > 0 && score % 100 === 0 && score % 500 !== 0) playSound('score');
-            if(frame % 600 === 0) speed += 0.5;
+            
+            // Audio ogni 100 punti
+            if(score > 0 && score % 100 === 0 && score % 500 !== 0) playSound('score'); 
+            
+            // ACCELERAZIONE: Più rapida (ogni 300 frame invece di 600)
+            if(frame % 300 === 0) speed += 0.5;
 
             // HUD
             ctx.fillStyle = '#acacac';
-            ctx.font = "bold 24px 'VT323'";
+            ctx.font = "bold 28px 'VT323'";
             ctx.textAlign = "right";
             ctx.fillText("HI " + score.toString().padStart(5, '0'), canvas.width - 20, 40);
 
-            // FISICA
+            // Fisica
             if(!dino.grounded) {
                 dino.dy += dino.gravity;
                 dino.y += dino.dy;
             }
+
+            // Collisione Pavimento
             let currentH = dino.crouching ? dino.crouchH : dino.standH;
-            if(dino.y + currentH > groundY) {
-                dino.y = groundY - currentH;
+            // Aggiungi pixel per le gambe
+            let totalH = currentH + 10; // +10 per le gambe
+            
+            if(dino.y + totalH > groundY) {
+                dino.y = groundY - totalH;
                 dino.dy = 0;
                 dino.grounded = true;
             }
 
-            // DISEGNO
-            drawDino(dino.x, dino.y, dino.w, dino.h);
+            // Disegna Dino
+            drawDinoBody(dino.x, dino.y, dino.w, dino.h);
 
-            // OSTACOLI
-            let minGap = 200 + (speed * 18);
+            // GENERAZIONE OSTACOLI (Bilanciata sulla velocità)
+            // minGap aumenta con la velocità per dare tempo di reazione
+            let minGap = 250 + (speed * 20); 
             let lastObs = obstacles[obstacles.length - 1];
             let dist = lastObs ? canvas.width - lastObs.x : Infinity;
 
             if(dist > minGap) {
-                if(Math.random() < 0.025) {
-                    let type = Math.random() > 0.7 ? 'bird' : 'cactus';
+                if(Math.random() < 0.03) { // 3% di chance per frame
+                    let type = Math.random() > 0.65 ? 'bird' : 'cactus';
                     let w = type === 'cactus' ? 30 : 40;
                     let h = type === 'cactus' ? 45 : 30;
                     let y = groundY - h;
-                    if(type === 'bird') y = groundY - 65; // Volante
+                    
+                    if(type === 'bird') {
+                        // Uccello altezza testa (devi abbassarti)
+                        y = groundY - 60; 
+                    }
 
                     obstacles.push({ x: canvas.width, y: y, w: w, h: h, type: type });
                 }
@@ -416,31 +445,43 @@
                 let obs = obstacles[i];
                 obs.x -= speed;
                 
-                if(obs.type === 'cactus') drawCactus(obs.x, obs.y, obs.w, obs.h);
-                else drawBird(obs.x, obs.y, obs.w, obs.h);
+                ctx.fillStyle = '#acacac';
+                if(obs.type === 'cactus') {
+                    // Disegna Cactus Pixel
+                    ctx.fillRect(obs.x + 10, obs.y, 10, obs.h); // Centro
+                    ctx.fillRect(obs.x, obs.y+10, 5, 15); // Braccio sx
+                    ctx.fillRect(obs.x+25, obs.y+5, 5, 15); // Braccio dx
+                } else {
+                    // Disegna Uccello
+                    let wingY = (Math.floor(frame/10)%2===0) ? -10 : 0;
+                    ctx.fillRect(obs.x, obs.y+10, 40, 10); // Corpo
+                    ctx.fillRect(obs.x+15, obs.y+5+wingY, 15, 8); // Ala
+                    ctx.fillRect(obs.x, obs.y+5, 10, 10); // Testa
+                }
 
-                // COLLISIONE
-                let pad = 5;
+                // COLLISIONE (Hitbox Precisa)
+                let pad = 6;
                 let dh = dino.crouching ? dino.crouchH : dino.standH;
+                // Collisione corpo
                 if (dino.x + pad < obs.x + obs.w - pad &&
-                    dino.x + dino.w - pad > obs.x + pad &&
+                    dino.x + 45 - pad > obs.x + pad &&
                     dino.y + pad < obs.y + obs.h - pad &&
-                    dino.y + dh - pad > obs.y + pad) {
+                    dino.y + dh + 10 - pad > obs.y + pad) {
+                    
                     gameOver();
                 }
+
                 if(obs.x + obs.w < 0) { obstacles.splice(i, 1); i--; }
             }
 
-            // PAVIMENTO
-            ctx.fillStyle = '#acacac';
+            // Pavimento
             ctx.fillRect(0, groundY, canvas.width, 2);
         }
 
         function gameOver() {
             gameRunning = false;
             playSound('die');
-            // NASCONDI CONTROLLI
-            document.getElementById('controls-area').style.display = 'none';
+            document.getElementById('controls-area').style.display = 'none'; // Nascondi tasti
             document.getElementById('final-score').innerText = score;
             document.getElementById('lose-screen').classList.remove('hidden');
         }
