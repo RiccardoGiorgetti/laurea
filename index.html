@@ -6,17 +6,17 @@
     <title>Run Riccardo Run</title>
     <style>
         /* STILE GENERALE */
-        body { margin: 0; overflow: hidden; background-color: #111; font-family: 'Verdana', sans-serif; touch-action: none; user-select: none; }
+        body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Verdana', sans-serif; touch-action: none; user-select: none; -webkit-tap-highlight-color: transparent; }
         
-        #game-container { position: relative; width: 100vw; height: 100vh; background: linear-gradient(180deg, #222 0%, #000 100%); overflow: hidden; }
+        #game-container { position: relative; width: 100vw; height: 100vh; background: linear-gradient(180deg, #222 0%, #111 100%); overflow: hidden; }
         
         canvas { display: block; width: 100%; height: 100%; }
 
         /* HUD PUNTEGGIO */
         #score-hud {
-            position: absolute; top: 20px; right: 20px;
-            color: #00ff41; font-size: 28px; font-weight: bold; font-family: 'Courier New', monospace;
-            z-index: 10; text-shadow: 0 0 10px rgba(0,255,65,0.5);
+            position: absolute; top: 30px; right: 30px;
+            color: #00ff41; font-size: 36px; font-weight: bold; font-family: 'Courier New', monospace;
+            z-index: 10; text-shadow: 0 0 10px rgba(0,255,65,0.5); pointer-events: none;
         }
 
         /* MENU E SCHERMATE */
@@ -26,32 +26,26 @@
             z-index: 30; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); 
         }
         
-        h1 { color: #fff; font-size: 32px; text-transform: uppercase; margin-bottom: 10px; text-align: center; }
-        p { color: #ccc; margin-bottom: 20px; text-align: center; font-size: 14px; max-width: 90%; }
+        h1 { color: #fff; font-size: 36px; text-transform: uppercase; margin-bottom: 10px; text-align: center; }
+        p { color: #ccc; margin-bottom: 25px; text-align: center; font-size: 16px; max-width: 85%; line-height: 1.4; }
         
-        /* CONTROLLI MOBILE (Visibili solo durante il gioco) */
-        #mobile-controls {
-            position: absolute; bottom: 20px; left: 0; width: 100%;
-            display: flex; justify-content: space-around; padding: 0 20px; box-sizing: border-box;
-            z-index: 20; display: none; /* Nascosti nel menu */
+        /* ZONE DI TOCCO INVISIBILI (Per il gioco) */
+        #touch-zones {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 20; display: none; /* Nascosto nei menu */
+            flex-direction: column;
         }
-
-        .control-btn {
-            width: 120px; height: 80px;
-            border-radius: 15px; border: 2px solid #555;
-            background: rgba(255,255,255,0.1);
-            color: white; font-size: 20px; font-weight: bold;
-            display: flex; align-items: center; justify-content: center;
-            user-select: none; -webkit-user-select: none;
-        }
-        .control-btn:active { background: rgba(0,255,65,0.3); border-color: #00ff41; transform: scale(0.95); }
+        /* Metà superiore per saltare, metà inferiore per abbassarsi */
+        #touch-jump-zone { flex: 1; /* background: rgba(0,255,0,0.1); debug */ }
+        #touch-crouch-zone { flex: 1; /* background: rgba(255,0,0,0.1); debug */ }
 
         /* BOTTONI MENU */
         .menu-btn { 
-            background: #00ff41; border: none; padding: 15px 40px; color: #000; 
-            font-size: 20px; font-weight: bold; border-radius: 50px; cursor: pointer; 
-            box-shadow: 0 0 15px rgba(0, 255, 65, 0.4); text-transform: uppercase; margin-top: 10px;
+            background: #00ff41; border: none; padding: 15px 50px; color: #000; 
+            font-size: 22px; font-weight: bold; border-radius: 50px; cursor: pointer; 
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.4); text-transform: uppercase; margin-top: 10px;
         }
+        .menu-btn:active { transform: scale(0.95); background: #00cc33; }
 
         .hidden { display: none !important; }
 
@@ -60,11 +54,11 @@
         /* CLASSIFICA */
         #leaderboard-box { 
             background: rgba(255,255,255,0.08); width: 90%; max-width: 400px; 
-            padding: 15px; border-radius: 15px; max-height: 200px; overflow-y: auto; 
-            text-align: left; border: 1px solid #333; margin-top: 20px;
+            padding: 20px; border-radius: 15px; max-height: 250px; overflow-y: auto; 
+            text-align: left; border: 1px solid #333; margin-top: 25px;
         }
-        .row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #444; color: #ccc; font-size: 14px; font-family: monospace; }
-        .row:first-child { color: #ffd700; font-weight: bold; } 
+        .row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #444; color: #ccc; font-size: 15px; font-family: monospace; }
+        .row:first-child { color: #ffd700; font-weight: bold; font-size: 17px; } 
     </style>
 
     <script type="module">
@@ -88,13 +82,13 @@
         window.saveScoreToDb = function(name, score) {
             const btn = document.getElementById('btn-save');
             btn.innerText = "Salvataggio..."; btn.disabled = true;
-            push(ref(db, 'scores_dino'), { name: name, score: score, date: Date.now() })
+            push(ref(db, 'scores_dino_v2'), { name: name, score: score, date: Date.now() })
             .then(() => location.reload())
             .catch((e) => { alert("Errore: " + e); btn.disabled = false; });
         };
 
         window.loadLeaderboard = function() {
-            const q = query(ref(db, 'scores_dino'), orderByChild('score'), limitToLast(10));
+            const q = query(ref(db, 'scores_dino_v2'), orderByChild('score'), limitToLast(10));
             onValue(q, (snapshot) => {
                 const list = document.getElementById('lb-list');
                 list.innerHTML = "";
@@ -123,7 +117,7 @@
 
         <div id="start-screen" class="ui-layer">
             <h1>LAUREA RUN</h1>
-            <p>Salta gli ostacoli a terra.<br>Abbassati per quelli in aria.</p>
+            <p>Tocca la metà <b>ALTA</b> per saltare.<br>Tieni premuta la metà <b>BASSA</b> per abbassarti.</p>
             <button class="menu-btn" onclick="startGame()">GIOCA</button>
             <div id="leaderboard-box">
                 <div style="text-align:center; color:#00ff41; border-bottom:1px solid #444; margin-bottom:10px; padding-bottom:5px; font-weight:bold;">🏆 TOP 10</div>
@@ -133,15 +127,15 @@
 
         <div id="lose-screen" class="ui-layer hidden">
             <h1 style="color:#ff3333;">GAME OVER</h1>
-            <p style="font-size: 20px; color: white;">Punteggio: <span id="final-score" style="font-weight:bold; color:#00ff41">0</span></p>
+            <p style="font-size: 24px; color: white;">Punteggio: <span id="final-score" style="font-weight:bold; color:#00ff41">0</span></p>
             <input type="text" id="player-name" placeholder="IL TUO NOME" maxlength="10">
             <button id="btn-save" class="menu-btn" onclick="submitScore()">SALVA</button>
-            <button onclick="resetGame()" style="background:transparent; border:1px solid #555; color:#aaa; font-size:14px; padding:10px 20px; margin-top:15px; border-radius: 20px;">Rigioca</button>
+            <button onclick="resetGame()" style="background:transparent; border:1px solid #555; color:#aaa; font-size:14px; padding:15px 30px; margin-top:15px; border-radius: 30px;">Rigioca</button>
         </div>
 
-        <div id="mobile-controls">
-            <div class="control-btn" id="btn-crouch" ontouchstart="startCrouch(event)" ontouchend="stopCrouch(event)">⬇️ GIÙ</div>
-            <div class="control-btn" id="btn-jump" ontouchstart="doJump(event)">⬆️ SALTA</div>
+        <div id="touch-zones">
+            <div id="touch-jump-zone"></div>
+            <div id="touch-crouch-zone"></div>
         </div>
     </div>
 
@@ -151,6 +145,10 @@
         const imgFace = new Image();
         imgFace.src = 'face.png'; // La tua faccia
 
+        // Dimensioni più grandi per il mobile
+        const PLAYER_SIZE = 70; 
+        const GROUND_HEIGHT = 80; // Pavimento più alto
+
         function resize() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
@@ -159,10 +157,9 @@
         resize();
 
         // CONFIGURAZIONE
-        const GRAVITY = 0.8;
-        const JUMP_FORCE = -14; 
-        const GROUND_HEIGHT = 50;
-        let speed = 6;
+        const GRAVITY = 1.0;
+        const JUMP_FORCE = -17; 
+        let speed = 7;
         
         let state = {
             running: false,
@@ -170,37 +167,32 @@
             frameCount: 0,
             player: { 
                 x: 50, y: 0, dy: 0, 
-                w: 50, h: 50, // Dimensione normale
-                originalH: 50, 
+                w: PLAYER_SIZE, h: PLAYER_SIZE, 
+                originalH: PLAYER_SIZE, 
                 grounded: false, 
                 crouching: false 
             },
             obstacles: []
         };
 
-        // CONTROLLI (Tastiera + Touch)
-        function doJump(e) {
-            if(e) e.preventDefault();
+        // AZIONI
+        function doJump() {
             if(state.running && state.player.grounded) {
                 state.player.dy = JUMP_FORCE;
                 state.player.grounded = false;
-                // Se salto, smetto di abbassarmi
-                state.player.crouching = false;
-                state.player.h = state.player.originalH; 
+                if(state.player.crouching) stopCrouch();
             }
         }
 
-        function startCrouch(e) {
-            if(e) e.preventDefault();
-            if(state.running && state.player.grounded) {
+        function startCrouch() {
+            if(state.running && !state.player.crouching) {
                 state.player.crouching = true;
-                state.player.h = state.player.originalH / 2; // Diventa metà altezza
-                state.player.y += state.player.originalH / 2; // Sposta giù visivamente
+                state.player.h = state.player.originalH / 2; // Dimezza altezza
+                if(state.player.grounded) state.player.y += state.player.originalH / 2; 
             }
         }
 
-        function stopCrouch(e) {
-            if(e) e.preventDefault();
+        function stopCrouch() {
             if(state.running && state.player.crouching) {
                 state.player.crouching = false;
                 state.player.y -= state.player.originalH / 2; // Torna su
@@ -208,25 +200,25 @@
             }
         }
 
-        // Event Listeners PC
-        window.addEventListener('keydown', (e) => {
-            if(e.code === 'ArrowUp' || e.code === 'Space') doJump();
-            if(e.code === 'ArrowDown') startCrouch();
-        });
-        window.addEventListener('keyup', (e) => {
-            if(e.code === 'ArrowDown') stopCrouch();
-        });
+        // CONTROLLI TOUCH (Zone Invisibili)
+        const jumpZone = document.getElementById('touch-jump-zone');
+        const crouchZone = document.getElementById('touch-crouch-zone');
 
-        // Event Listeners Mouse (per test su PC coi bottoni)
-        document.getElementById('btn-jump').addEventListener('mousedown', (e) => doJump(e));
-        document.getElementById('btn-crouch').addEventListener('mousedown', (e) => startCrouch(e));
-        document.getElementById('btn-crouch').addEventListener('mouseup', (e) => stopCrouch(e));
+        jumpZone.addEventListener('touchstart', (e) => { e.preventDefault(); doJump(); });
+        // Per test su PC:
+        jumpZone.addEventListener('mousedown', (e) => { doJump(); });
+
+        crouchZone.addEventListener('touchstart', (e) => { e.preventDefault(); startCrouch(); });
+        crouchZone.addEventListener('touchend', (e) => { e.preventDefault(); stopCrouch(); });
+         // Per test su PC:
+        crouchZone.addEventListener('mousedown', (e) => { startCrouch(); });
+        crouchZone.addEventListener('mouseup', (e) => { stopCrouch(); });
 
 
         // FUNZIONI GIOCO
         function startGame() {
             document.getElementById('start-screen').classList.add('hidden');
-            document.getElementById('mobile-controls').style.display = 'flex'; // Mostra controlli
+            document.getElementById('touch-zones').style.display = 'flex'; // Attiva controlli
             resetVariables();
             state.running = true;
             loop();
@@ -239,7 +231,7 @@
             state.player.crouching = false;
             state.score = 0;
             state.frameCount = 0;
-            speed = 6;
+            speed = 7;
             state.obstacles = [];
             document.getElementById('score-hud').innerText = "0";
         }
@@ -255,11 +247,11 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             state.frameCount++;
-            // Aumento difficoltà graduale
-            if(state.frameCount % 500 === 0) speed += 0.5;
+            // Aumento difficoltà
+            if(state.frameCount % 400 === 0) speed += 0.5;
             
             // Punteggio
-            if(state.frameCount % 10 === 0) {
+            if(state.frameCount % 8 === 0) {
                 state.score++;
                 document.getElementById('score-hud').innerText = state.score;
             }
@@ -279,28 +271,37 @@
                 state.player.grounded = true;
             }
 
-            // GENERAZIONE OSTACOLI (Logica migliorata)
+            // GENERAZIONE OSTACOLI
             spawnObstacles();
 
             // DISEGNO PAVIMENTO
             ctx.fillStyle = '#333';
             ctx.fillRect(0, groundY, canvas.width, GROUND_HEIGHT);
             ctx.fillStyle = '#00ff41'; // Linea verde
-            ctx.fillRect(0, groundY, canvas.width, 2);
+            ctx.fillRect(0, groundY, canvas.width, 4);
 
-            // DISEGNO PLAYER
+            // DISEGNO PLAYER (CERCHIO)
             ctx.save();
-            // Se mi abbasso, schiaccio l'immagine
+            
             if(state.player.crouching) {
-                // Disegna schiacciato
+                // Quando abbassato, disegna schiacciato (senza cerchio perfetto)
                 if(imgFace.complete && imgFace.naturalHeight !== 0) {
                      ctx.drawImage(imgFace, state.player.x, state.player.y, state.player.w, state.player.h);
                 } else {
-                    ctx.fillStyle = 'yellow'; // Colore diverso quando abbassato
+                    ctx.fillStyle = 'yellow'; 
                     ctx.fillRect(state.player.x, state.player.y, state.player.w, state.player.h);
                 }
             } else {
-                // Normale
+                // Normale: DISEGNA A CERCHIO
+                let centerX = state.player.x + state.player.w / 2;
+                let centerY = state.player.y + state.player.h / 2;
+                let radius = state.player.w / 2;
+
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+                ctx.closePath();
+                ctx.clip(); // <--- Questo ritaglia l'immagine in un cerchio
+
                 if(imgFace.complete && imgFace.naturalHeight !== 0) {
                     ctx.drawImage(imgFace, state.player.x, state.player.y, state.player.w, state.player.h);
                 } else {
@@ -308,37 +309,33 @@
                     ctx.fillRect(state.player.x, state.player.y, state.player.w, state.player.h);
                 }
             }
-            // Bordo Debug
-            // ctx.strokeStyle = 'white'; ctx.strokeRect(state.player.x, state.player.y, state.player.w, state.player.h);
             ctx.restore();
+
+            // Bordo (Opzionale, per vedere l'hitbox)
+            // ctx.strokeStyle = 'white'; ctx.strokeRect(state.player.x, state.player.y, state.player.w, state.player.h);
 
             // GESTIONE OSTACOLI
             updateObstacles();
         }
 
         function spawnObstacles() {
-            // Distanza minima tra ostacoli basata sulla velocità (evita ostacoli impossibili)
-            let minGap = 50 + (speed * 18); // Più vai veloce, più spazio serve
-            
-            // Controlla distanza dall'ultimo ostacolo
+            let minGap = 60 + (speed * 20); 
             let lastObs = state.obstacles[state.obstacles.length - 1];
             let distance = lastObs ? canvas.width - lastObs.x : Infinity;
 
             if (distance > minGap) {
-                // Probabilità di spawn (1 su 40 frame circa)
-                if (Math.random() < 0.02) {
-                    let type = Math.random() > 0.6 ? 'air' : 'ground';
-                    let obsW = 40; 
-                    let obsH = 40;
-                    let obsY = canvas.height - GROUND_HEIGHT - obsH; // A terra
+                if (Math.random() < 0.03) {
+                    let type = Math.random() > 0.5 ? 'air' : 'ground';
+                    // Ostacoli più grandi per il player più grande
+                    let obsW = 60; 
+                    let obsH = 60;
+                    let obsY = canvas.height - GROUND_HEIGHT - obsH; 
 
                     if(type === 'air') {
-                        // In aria (devi abbassarti)
-                        // Altezza tale che se salti sbatti, se stai dritto sbatti, se ti abbassi passi
-                        obsY = canvas.height - GROUND_HEIGHT - 75; 
-                        obsW = 50; obsH = 40;
+                        // Altezza per passare sotto abbassati
+                        obsY = canvas.height - GROUND_HEIGHT - 100; 
+                        obsW = 70; obsH = 50;
                     }
-
                     state.obstacles.push({ x: canvas.width, y: obsY, w: obsW, h: obsH, type: type });
                 }
             }
@@ -351,36 +348,26 @@
 
                 // Disegno
                 if(obs.type === 'ground') {
-                    ctx.fillStyle = '#ff3333'; // Ostacolo terra rosso
+                    ctx.fillStyle = '#ff3333'; // Terra rosso
                     ctx.fillRect(obs.x, obs.y, obs.w, obs.h);
                 } else {
-                    ctx.fillStyle = '#00ffff'; // Ostacolo aria azzurro (Uccello/Prof)
+                    ctx.fillStyle = '#00ffff'; // Aria azzurro
                     ctx.fillRect(obs.x, obs.y, obs.w, obs.h);
                 }
 
-                // COLLISIONE
-                // Riduciamo hitbox player leggermente per essere buoni
+                // COLLISIONE (Hitbox permissiva)
                 let p = state.player;
-                let buffer = 5; 
-                
-                if (p.x + buffer < obs.x + obs.w &&
-                    p.x + p.w - buffer > obs.x &&
-                    p.y + buffer < obs.y + obs.h &&
-                    p.y + p.h - buffer > obs.y) {
+                let buffer = 10; 
+                if (p.x + buffer < obs.x + obs.w && p.x + p.w - buffer > obs.x && p.y + buffer < obs.y + obs.h && p.y + p.h - buffer > obs.y) {
                     gameOver();
                 }
-
-                // Pulizia
-                if(obs.x + obs.w < 0) {
-                    state.obstacles.splice(i, 1);
-                    i--;
-                }
+                if(obs.x + obs.w < 0) { state.obstacles.splice(i, 1); i--; }
             }
         }
 
         function gameOver() {
             state.running = false;
-            document.getElementById('mobile-controls').style.display = 'none'; // Nascondi tasti
+            document.getElementById('touch-zones').style.display = 'none'; // Nascondi controlli
             document.getElementById('final-score').innerText = state.score;
             document.getElementById('lose-screen').classList.remove('hidden');
         }
