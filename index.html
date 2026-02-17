@@ -3,69 +3,126 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Run Riccardo Run</title>
+    <title>Dino Run: Laurea Edition</title>
     <style>
-        /* STILE GENERALE */
-        body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Verdana', sans-serif; touch-action: none; user-select: none; -webkit-tap-highlight-color: transparent; }
-        
-        #game-container { position: relative; width: 100vw; height: 100vh; background: linear-gradient(180deg, #222 0%, #111 100%); overflow: hidden; }
-        
-        canvas { display: block; width: 100%; height: 100%; }
+        /* STILE CHROME "NO INTERNET" (DARK MODE) */
+        @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap'); /* Font Pixelato */
 
-        /* HUD PUNTEGGIO */
-        #score-hud {
-            position: absolute; top: 30px; right: 30px;
-            color: #00ff41; font-size: 36px; font-weight: bold; font-family: 'Courier New', monospace;
-            z-index: 10; text-shadow: 0 0 10px rgba(0,255,65,0.5); pointer-events: none;
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+            background-color: #202124; /* Grigio scuro Chrome */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #acacac;
+            user-select: none;
+            touch-action: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        #game-container { 
+            position: relative; 
+            width: 100vw; 
+            height: 100vh; 
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+        }
+        
+        canvas { 
+            display: block; 
+            max-width: 800px; /* Larghezza massima stile desktop */
+            width: 100%;
+            height: 100%; 
         }
 
-        /* MENU E SCHERMATE */
+        /* MESSAGGIO ERRORE (UI MENU) */
         .ui-layer { 
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-            display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            z-index: 30; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); 
+            position: absolute; 
+            top: 20%; 
+            width: 100%; 
+            max-width: 600px;
+            text-align: left;
+            padding: 20px;
+            box-sizing: border-box;
+            z-index: 10;
         }
-        
-        h1 { color: #fff; font-size: 36px; text-transform: uppercase; margin-bottom: 10px; text-align: center; }
-        p { color: #ccc; margin-bottom: 25px; text-align: center; font-size: 16px; max-width: 85%; line-height: 1.4; }
-        
-        /* ZONE DI TOCCO INVISIBILI (Per il gioco) */
-        #touch-zones {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 20; display: none; /* Nascosto nei menu */
-            flex-direction: column;
-        }
-        /* Metà superiore per saltare, metà inferiore per abbassarsi */
-        #touch-jump-zone { flex: 1; /* background: rgba(0,255,0,0.1); debug */ }
-        #touch-crouch-zone { flex: 1; /* background: rgba(255,0,0,0.1); debug */ }
 
-        /* BOTTONI MENU */
-        .menu-btn { 
-            background: #00ff41; border: none; padding: 15px 50px; color: #000; 
-            font-size: 22px; font-weight: bold; border-radius: 50px; cursor: pointer; 
-            box-shadow: 0 0 20px rgba(0, 255, 65, 0.4); text-transform: uppercase; margin-top: 10px;
+        h1 { 
+            font-size: 24px; 
+            font-weight: 500; 
+            margin: 0 0 20px 0; 
+            color: #ff5555; /* Rosso errore */
         }
-        .menu-btn:active { transform: scale(0.95); background: #00cc33; }
+        
+        .error-code {
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            color: #8ab4f8;
+            margin-top: 10px;
+            text-transform: uppercase;
+        }
+
+        p { font-size: 15px; line-height: 1.6; color: #9aa0a6; }
+
+        ul { margin-top: 15px; font-size: 14px; color: #9aa0a6; padding-left: 20px; }
+        li { margin-bottom: 5px; }
+
+        /* BOTTONE INIZIA */
+        button { 
+            background: #8ab4f8; 
+            border: none; 
+            padding: 10px 25px; 
+            color: #202124; 
+            font-size: 16px; 
+            font-weight: bold; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            margin-top: 20px;
+            font-family: inherit;
+        }
+        button:active { background: #669df6; }
 
         .hidden { display: none !important; }
 
-        input { padding: 15px; font-size: 18px; text-align: center; border-radius: 10px; border: 2px solid #333; background: #222; color: white; margin-bottom: 20px; width: 70%; max-width: 300px; }
-
-        /* CLASSIFICA */
-        #leaderboard-box { 
-            background: rgba(255,255,255,0.08); width: 90%; max-width: 400px; 
-            padding: 20px; border-radius: 15px; max-height: 250px; overflow-y: auto; 
-            text-align: left; border: 1px solid #333; margin-top: 25px;
+        /* CLASSIFICA STILE DEBUG */
+        #leaderboard { 
+            margin-top: 30px; 
+            border-top: 1px solid #5f6368; 
+            padding-top: 15px; 
         }
-        .row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #444; color: #ccc; font-size: 15px; font-family: monospace; }
-        .row:first-child { color: #ffd700; font-weight: bold; font-size: 17px; } 
+        .lb-title { font-size: 12px; font-weight: bold; color: #5f6368; letter-spacing: 1px; }
+        .lb-row { 
+            font-family: 'Courier New', monospace; 
+            font-size: 13px; 
+            display: flex; 
+            justify-content: space-between; 
+            margin-top: 5px; 
+            color: #acacac;
+        }
+        .lb-row:first-child { color: #8ab4f8; } /* Primo posto blu */
+
+        /* INPUT NOME GAME OVER */
+        input {
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid #8ab4f8;
+            color: white;
+            font-size: 18px;
+            padding: 5px;
+            text-align: center;
+            width: 200px;
+            margin-bottom: 15px;
+            font-family: 'Courier New', monospace;
+        }
+        input:focus { outline: none; }
+
     </style>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
         import { getDatabase, ref, push, query, orderByChild, limitToLast, onValue } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
 
-        // --- INCOLLA QUI LA TUA CONFIGURAZIONE FIREBASE ---
+        // --- INSERISCI QUI LE TUE CHIAVI FIREBASE ---
         const firebaseConfig = {
             apiKey: "INCOLLA_LA_TUA_API_KEY",
             authDomain: "TUO-PROGETTO.firebaseapp.com",
@@ -74,33 +131,37 @@
             messagingSenderId: "NUMERO",
             appId: "CODICE_APP"
         };
-        // --------------------------------------------------
+        // --------------------------------------------
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
         window.saveScoreToDb = function(name, score) {
             const btn = document.getElementById('btn-save');
-            btn.innerText = "Salvataggio..."; btn.disabled = true;
-            push(ref(db, 'scores_dino_v2'), { name: name, score: score, date: Date.now() })
+            btn.innerText = "SAVING..."; btn.disabled = true;
+            push(ref(db, 'scores_dino_final'), { name: name, score: score, date: Date.now() })
             .then(() => location.reload())
-            .catch((e) => { alert("Errore: " + e); btn.disabled = false; });
+            .catch((e) => { alert("ERR_CONNECTION_DB: " + e); btn.disabled = false; });
         };
 
         window.loadLeaderboard = function() {
-            const q = query(ref(db, 'scores_dino_v2'), orderByChild('score'), limitToLast(10));
+            const q = query(ref(db, 'scores_dino_final'), orderByChild('score'), limitToLast(5));
             onValue(q, (snapshot) => {
                 const list = document.getElementById('lb-list');
                 list.innerHTML = "";
                 let data = [];
                 snapshot.forEach(c => data.push(c.val()));
                 data.sort((a,b) => b.score - a.score); 
-                if(data.length === 0) list.innerHTML = "<div style='text-align:center; padding:10px;'>Nessun record</div>";
+                
+                if(data.length === 0) list.innerHTML = "<div class='lb-row'>Waiting for sync...</div>";
+                
                 data.forEach((entry, i) => {
                     const d = document.createElement('div');
-                    d.className = 'row';
-                    let safeName = entry.name ? entry.name.substring(0, 12) : "Anonimo";
-                    d.innerHTML = `<span>${i+1}. ${safeName}</span><span>${entry.score}</span>`;
+                    d.className = 'lb-row';
+                    // Stile Monospace: 01. NOME..... 500
+                    let rank = (i+1).toString().padStart(2, '0');
+                    let safeName = entry.name ? entry.name.substring(0, 10).toUpperCase() : "ANON";
+                    d.innerHTML = `<span>${rank}. ${safeName}</span><span>HI ${entry.score.toString().padStart(5, '0')}</span>`;
                     list.appendChild(d);
                 });
             });
@@ -110,32 +171,38 @@
 </head>
 <body>
 
-    <div id="score-hud">0</div>
-
     <div id="game-container">
         <canvas id="gameCanvas"></canvas>
 
         <div id="start-screen" class="ui-layer">
-            <h1>LAUREA RUN</h1>
-            <p>Tocca la metà <b>ALTA</b> per saltare.<br>Tieni premuta la metà <b>BASSA</b> per abbassarti.</p>
-            <button class="menu-btn" onclick="startGame()">GIOCA</button>
-            <div id="leaderboard-box">
-                <div style="text-align:center; color:#00ff41; border-bottom:1px solid #444; margin-bottom:10px; padding-bottom:5px; font-weight:bold;">🏆 TOP 10</div>
-                <div id="lb-list">Caricamento...</div>
+            <img src="https://i.imgur.com/Qk2t4t6.png" style="width: 48px; opacity: 0.8; margin-bottom: 20px;"> <h1>Nessuna connessione alla Laurea</h1>
+            <p>Impossibile trovare la tesi di Riccardo. Prova a:</p>
+            <ul>
+                <li>Controllare i cavi di rete</li>
+                <li>Riavviare il modem e il router</li>
+                <li>Saltare i cactus e festeggiare</li>
+            </ul>
+            <div class="error-code">ERR_LAUREA_NOT_FOUND</div>
+            
+            <button onclick="startGame()">Premi Spazio per ricollegare</button>
+
+            <div id="leaderboard">
+                <div class="lb-title">SYSTEM_LOGS (TOP SCORES)</div>
+                <div id="lb-list">Loading...</div>
             </div>
         </div>
 
-        <div id="lose-screen" class="ui-layer hidden">
-            <h1 style="color:#ff3333;">GAME OVER</h1>
-            <p style="font-size: 24px; color: white;">Punteggio: <span id="final-score" style="font-weight:bold; color:#00ff41">0</span></p>
-            <input type="text" id="player-name" placeholder="IL TUO NOME" maxlength="10">
-            <button id="btn-save" class="menu-btn" onclick="submitScore()">SALVA</button>
-            <button onclick="resetGame()" style="background:transparent; border:1px solid #555; color:#aaa; font-size:14px; padding:15px 30px; margin-top:15px; border-radius: 30px;">Rigioca</button>
-        </div>
-
-        <div id="touch-zones">
-            <div id="touch-jump-zone"></div>
-            <div id="touch-crouch-zone"></div>
+        <div id="lose-screen" class="ui-layer hidden" style="text-align: center;">
+            <h1 style="color: #acacac;">GAME OVER</h1>
+            <p style="font-family: 'Courier New'; font-size: 20px;">SCORE: <span id="final-score" style="color: white; font-weight: bold;">00000</span></p>
+            
+            <div style="margin-top: 30px;">
+                <input type="text" id="player-name" placeholder="INSERT NAME" maxlength="10" autocomplete="off">
+                <br>
+                <button id="btn-save" onclick="submitScore()">SALVA RECORD</button>
+                <br><br>
+                <span onclick="resetGame()" style="cursor: pointer; text-decoration: underline; font-size: 14px; color: #8ab4f8;">Riprova (Reload)</span>
+            </div>
         </div>
     </div>
 
@@ -143,97 +210,81 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const imgFace = new Image();
-        imgFace.src = 'face.png'; // La tua faccia
+        imgFace.src = 'face.png'; // LA TUA FACCIA
 
-        // Dimensioni più grandi per il mobile
-        const PLAYER_SIZE = 70; 
-        const GROUND_HEIGHT = 80; // Pavimento più alto
+        // Sprite Cactus e Uccello (Disegnati via codice per evitare file esterni)
+        // Non serve scaricare nulla, il codice disegna i pixel
 
         function resize() {
-            canvas.width = window.innerWidth;
+            canvas.width = Math.min(window.innerWidth, 800);
             canvas.height = window.innerHeight;
         }
         window.addEventListener('resize', resize);
         resize();
 
-        // CONFIGURAZIONE
-        const GRAVITY = 1.0;
-        const JUMP_FORCE = -17; 
-        let speed = 7;
-        
-        let state = {
-            running: false,
-            score: 0,
-            frameCount: 0,
-            player: { 
-                x: 50, y: 0, dy: 0, 
-                w: PLAYER_SIZE, h: PLAYER_SIZE, 
-                originalH: PLAYER_SIZE, 
-                grounded: false, 
-                crouching: false 
-            },
-            obstacles: []
+        // VARIABILI
+        let gameRunning = false;
+        let score = 0;
+        let speed = 6;
+        let frame = 0;
+        let highScore = 0;
+
+        // DINO CONFIG
+        const DINO = {
+            x: 50,
+            y: 0,
+            w: 44, // Larghezza corpo
+            h: 47, // Altezza corpo
+            dy: 0,
+            jumpForce: -12,
+            gravity: 0.6,
+            grounded: false,
+            legAnim: 0 // Per animare le gambe
         };
+        let dino = { ...DINO };
 
-        // AZIONI
-        function doJump() {
-            if(state.running && state.player.grounded) {
-                state.player.dy = JUMP_FORCE;
-                state.player.grounded = false;
-                if(state.player.crouching) stopCrouch();
+        let obstacles = [];
+        let groundY = 0;
+
+        // INPUT
+        function jump(e) {
+            if(e) {
+                 if(e.type === 'keydown' && e.code !== 'Space' && e.code !== 'ArrowUp') return;
+                 // Prevent scroll
+                 if(e.type === 'touchstart' || e.code === 'Space') e.preventDefault();
+            }
+            
+            if(!gameRunning && document.getElementById('start-screen').classList.contains('hidden') === false) {
+                startGame();
+                return;
+            }
+
+            if(gameRunning && dino.grounded) {
+                dino.dy = dino.jumpForce;
+                dino.grounded = false;
             }
         }
 
-        function startCrouch() {
-            if(state.running && !state.player.crouching) {
-                state.player.crouching = true;
-                state.player.h = state.player.originalH / 2; // Dimezza altezza
-                if(state.player.grounded) state.player.y += state.player.originalH / 2; 
-            }
-        }
+        window.addEventListener('keydown', jump);
+        window.addEventListener('touchstart', jump, {passive: false});
+        window.addEventListener('mousedown', jump);
 
-        function stopCrouch() {
-            if(state.running && state.player.crouching) {
-                state.player.crouching = false;
-                state.player.y -= state.player.originalH / 2; // Torna su
-                state.player.h = state.player.originalH;
-            }
-        }
-
-        // CONTROLLI TOUCH (Zone Invisibili)
-        const jumpZone = document.getElementById('touch-jump-zone');
-        const crouchZone = document.getElementById('touch-crouch-zone');
-
-        jumpZone.addEventListener('touchstart', (e) => { e.preventDefault(); doJump(); });
-        // Per test su PC:
-        jumpZone.addEventListener('mousedown', (e) => { doJump(); });
-
-        crouchZone.addEventListener('touchstart', (e) => { e.preventDefault(); startCrouch(); });
-        crouchZone.addEventListener('touchend', (e) => { e.preventDefault(); stopCrouch(); });
-         // Per test su PC:
-        crouchZone.addEventListener('mousedown', (e) => { startCrouch(); });
-        crouchZone.addEventListener('mouseup', (e) => { stopCrouch(); });
-
-
-        // FUNZIONI GIOCO
         function startGame() {
             document.getElementById('start-screen').classList.add('hidden');
-            document.getElementById('touch-zones').style.display = 'flex'; // Attiva controlli
-            resetVariables();
-            state.running = true;
+            document.getElementById('lose-screen').classList.add('hidden');
+            resetGameParams();
+            gameRunning = true;
             loop();
         }
 
-        function resetVariables() {
-            state.player.y = canvas.height - GROUND_HEIGHT - state.player.originalH;
-            state.player.dy = 0;
-            state.player.h = state.player.originalH;
-            state.player.crouching = false;
-            state.score = 0;
-            state.frameCount = 0;
-            speed = 7;
-            state.obstacles = [];
-            document.getElementById('score-hud').innerText = "0";
+        function resetGameParams() {
+            groundY = canvas.height - 150; // Pavimento alto come su Chrome mobile
+            dino.y = groundY - dino.h;
+            dino.dy = 0;
+            obstacles = [];
+            score = 0;
+            speed = 6;
+            frame = 0;
         }
 
         function resetGame() {
@@ -241,141 +292,153 @@
             startGame();
         }
 
+        // DISEGNA DINO PIXELATO
+        function drawDino(x, y) {
+            ctx.fillStyle = '#acacac'; // Colore Dino Chrome
+
+            // 1. Corpo (Rettangolo base)
+            ctx.fillRect(x, y + 20, 40, 20); // Torso
+            ctx.fillRect(x - 10, y + 15, 10, 25); // Coda accennata
+
+            // 2. Faccia Utente (Testa)
+            if(imgFace.complete && imgFace.naturalHeight !== 0) {
+                ctx.save();
+                // Ritaglia a cerchio o quadrato smussato
+                ctx.drawImage(imgFace, x + 15, y, 35, 35); 
+                ctx.restore();
+            } else {
+                // Fallback testa quadrata
+                ctx.fillRect(x + 20, y, 25, 25);
+            }
+
+            // 3. Gambe (Animazione)
+            // Cambia gamba ogni 10 frame
+            let legOffset = (Math.floor(frame / 6) % 2 === 0) ? 0 : 10;
+            
+            if(dino.grounded) {
+                // Corsa
+                if(legOffset === 0) {
+                    ctx.fillRect(x + 5, y + 40, 8, 10); // Gamba sinistra
+                    ctx.fillRect(x + 25, y + 40, 8, 6); // Gamba destra alzata
+                } else {
+                    ctx.fillRect(x + 5, y + 40, 8, 6); // Gamba sx alzata
+                    ctx.fillRect(x + 25, y + 40, 8, 10); // Gamba dx
+                }
+            } else {
+                // Salto (gambe ferme)
+                ctx.fillRect(x + 5, y + 40, 8, 8);
+                ctx.fillRect(x + 25, y + 40, 8, 8);
+            }
+        }
+
+        function drawCactus(x, y, w, h) {
+            ctx.fillStyle = '#acacac';
+            // Cactus centrale
+            ctx.fillRect(x + w/3, y, w/3, h);
+            // Braccio sx
+            ctx.fillRect(x, y + 10, w/3, h/2);
+            // Braccio dx
+            ctx.fillRect(x + 2*w/3, y + 5, w/3, h/2);
+        }
+
         function loop() {
-            if(!state.running) return;
+            if(!gameRunning) return;
             requestAnimationFrame(loop);
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            state.frameCount++;
-            // Aumento difficoltà
-            if(state.frameCount % 400 === 0) speed += 0.5;
+            frame++;
             
-            // Punteggio
-            if(state.frameCount % 8 === 0) {
-                state.score++;
-                document.getElementById('score-hud').innerText = state.score;
+            // Punteggio (HI 00000 00000)
+            if(frame % 5 === 0) score++;
+            if(frame % 500 === 0) speed += 0.5; // Accelera
+
+            // Disegna HUD Punteggio
+            ctx.font = "20px 'Courier New'";
+            ctx.fillStyle = "#acacac";
+            ctx.textAlign = "right";
+            let scoreStr = score.toString().padStart(5, '0');
+            ctx.fillText(`HI ${scoreStr}`, canvas.width - 20, 50);
+
+            // FISICA DINO
+            dino.dy += dino.gravity;
+            dino.y += dino.dy;
+
+            if(dino.y + dino.h > groundY) {
+                dino.y = groundY - dino.h;
+                dino.dy = 0;
+                dino.grounded = true;
             }
 
-            // FISICA PLAYER
-            if(!state.player.grounded) {
-                state.player.dy += GRAVITY;
-                state.player.y += state.player.dy;
-            }
-
-            let groundY = canvas.height - GROUND_HEIGHT;
-            
-            // Atterraggio
-            if(state.player.y + state.player.h > groundY) {
-                state.player.y = groundY - state.player.h;
-                state.player.dy = 0;
-                state.player.grounded = true;
-            }
-
-            // GENERAZIONE OSTACOLI
-            spawnObstacles();
-
-            // DISEGNO PAVIMENTO
-            ctx.fillStyle = '#333';
-            ctx.fillRect(0, groundY, canvas.width, GROUND_HEIGHT);
-            ctx.fillStyle = '#00ff41'; // Linea verde
-            ctx.fillRect(0, groundY, canvas.width, 4);
-
-            // DISEGNO PLAYER (CERCHIO)
-            ctx.save();
-            
-            if(state.player.crouching) {
-                // Quando abbassato, disegna schiacciato (senza cerchio perfetto)
-                if(imgFace.complete && imgFace.naturalHeight !== 0) {
-                     ctx.drawImage(imgFace, state.player.x, state.player.y, state.player.w, state.player.h);
-                } else {
-                    ctx.fillStyle = 'yellow'; 
-                    ctx.fillRect(state.player.x, state.player.y, state.player.w, state.player.h);
-                }
-            } else {
-                // Normale: DISEGNA A CERCHIO
-                let centerX = state.player.x + state.player.w / 2;
-                let centerY = state.player.y + state.player.h / 2;
-                let radius = state.player.w / 2;
-
-                ctx.beginPath();
-                ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-                ctx.closePath();
-                ctx.clip(); // <--- Questo ritaglia l'immagine in un cerchio
-
-                if(imgFace.complete && imgFace.naturalHeight !== 0) {
-                    ctx.drawImage(imgFace, state.player.x, state.player.y, state.player.w, state.player.h);
-                } else {
-                    ctx.fillStyle = 'red';
-                    ctx.fillRect(state.player.x, state.player.y, state.player.w, state.player.h);
-                }
-            }
-            ctx.restore();
-
-            // Bordo (Opzionale, per vedere l'hitbox)
-            // ctx.strokeStyle = 'white'; ctx.strokeRect(state.player.x, state.player.y, state.player.w, state.player.h);
+            // DISEGNA DINO
+            drawDino(dino.x, dino.y);
 
             // GESTIONE OSTACOLI
-            updateObstacles();
-        }
+            // Spawn casuale ma con distanza minima
+            let minGap = 250 + (speed * 10);
+            let lastObs = obstacles[obstacles.length - 1];
+            let dist = lastObs ? canvas.width - lastObs.x : Infinity;
 
-        function spawnObstacles() {
-            let minGap = 60 + (speed * 20); 
-            let lastObs = state.obstacles[state.obstacles.length - 1];
-            let distance = lastObs ? canvas.width - lastObs.x : Infinity;
-
-            if (distance > minGap) {
-                if (Math.random() < 0.03) {
-                    let type = Math.random() > 0.5 ? 'air' : 'ground';
-                    // Ostacoli più grandi per il player più grande
-                    let obsW = 60; 
-                    let obsH = 60;
-                    let obsY = canvas.height - GROUND_HEIGHT - obsH; 
-
-                    if(type === 'air') {
-                        // Altezza per passare sotto abbassati
-                        obsY = canvas.height - GROUND_HEIGHT - 100; 
-                        obsW = 70; obsH = 50;
-                    }
-                    state.obstacles.push({ x: canvas.width, y: obsY, w: obsW, h: obsH, type: type });
+            if(dist > minGap) {
+                if(Math.random() < 0.02) {
+                    let type = Math.random() > 0.7 ? 'bird' : 'cactus';
+                    let h = type === 'cactus' ? 40 + Math.random() * 20 : 30; // Altezza variabile
+                    let w = type === 'cactus' ? 25 : 40;
+                    let y = type === 'cactus' ? groundY - h : groundY - 60 - Math.random() * 40; // Uccello vola
+                    
+                    obstacles.push({ x: canvas.width, y: y, w: w, h: h, type: type });
                 }
             }
-        }
 
-        function updateObstacles() {
-            for(let i = 0; i < state.obstacles.length; i++) {
-                let obs = state.obstacles[i];
+            // Update Ostacoli
+            for(let i=0; i<obstacles.length; i++) {
+                let obs = obstacles[i];
                 obs.x -= speed;
 
-                // Disegno
-                if(obs.type === 'ground') {
-                    ctx.fillStyle = '#ff3333'; // Terra rosso
-                    ctx.fillRect(obs.x, obs.y, obs.w, obs.h);
+                if(obs.type === 'cactus') {
+                    drawCactus(obs.x, obs.y, obs.w, obs.h);
                 } else {
-                    ctx.fillStyle = '#00ffff'; // Aria azzurro
-                    ctx.fillRect(obs.x, obs.y, obs.w, obs.h);
+                    // Disegna Uccello (Bird)
+                    ctx.fillStyle = '#acacac';
+                    ctx.fillRect(obs.x, obs.y + 10, obs.w, 10); // Corpo
+                    // Ali che battono
+                    let wingY = (Math.floor(frame / 10) % 2 === 0) ? -10 : 5;
+                    ctx.fillRect(obs.x + 15, obs.y + 10 + wingY, 10, 10);
                 }
 
-                // COLLISIONE (Hitbox permissiva)
-                let p = state.player;
-                let buffer = 10; 
-                if (p.x + buffer < obs.x + obs.w && p.x + p.w - buffer > obs.x && p.y + buffer < obs.y + obs.h && p.y + p.h - buffer > obs.y) {
+                // COLLISIONE (AABB semplice)
+                // Riduciamo hitbox leggermente (padding)
+                let pad = 8;
+                if (dino.x + pad < obs.x + obs.w - pad &&
+                    dino.x + dino.w - pad > obs.x + pad &&
+                    dino.y + pad < obs.y + obs.h - pad &&
+                    dino.y + dino.h - pad > obs.y + pad) {
+                    
                     gameOver();
                 }
-                if(obs.x + obs.w < 0) { state.obstacles.splice(i, 1); i--; }
+
+                if(obs.x + obs.w < 0) { obstacles.splice(i, 1); i--; }
+            }
+
+            // PAVIMENTO (Linea semplice)
+            ctx.fillStyle = '#acacac';
+            ctx.fillRect(0, groundY, canvas.width, 2);
+            
+            // Dettagli terreno (puntini a caso che scorrono)
+            if(frame % 10 === 0) {
+                // Non implementato per pulizia, ma la linea basta
             }
         }
 
         function gameOver() {
-            state.running = false;
-            document.getElementById('touch-zones').style.display = 'none'; // Nascondi controlli
-            document.getElementById('final-score').innerText = state.score;
+            gameRunning = false;
+            document.getElementById('final-score').innerText = score.toString().padStart(5, '0');
             document.getElementById('lose-screen').classList.remove('hidden');
         }
 
         window.submitScore = function() {
             const name = document.getElementById('player-name').value.trim();
-            if(!name) { alert("Inserisci un nome!"); return; }
-            window.saveScoreToDb(name, state.score);
+            if(!name) { alert("INSERT NAME"); return; }
+            window.saveScoreToDb(name, score);
         }
     </script>
 </body>
