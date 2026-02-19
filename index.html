@@ -10,60 +10,41 @@
         /* LAYOUT GENERALE */
         body { 
             margin: 0; padding: 0; 
-            overflow: hidden; 
-            background-color: #202124; 
+            overflow: hidden; background-color: #202124; 
             font-family: 'Segoe UI', sans-serif;
             user-select: none; -webkit-user-select: none;
             touch-action: none; -webkit-tap-highlight-color: transparent;
-            display: flex; flex-direction: column; 
-            height: 100vh;
+            display: flex; flex-direction: column; height: 100vh;
         }
         
-        /* ZONA GIOCO */
         #game-wrapper {
-            position: relative;
-            flex-grow: 1; 
-            width: 100%;
-            background: #202124;
-            overflow: hidden;
+            position: relative; flex-grow: 1; width: 100%;
+            background: #202124; overflow: hidden;
             border-bottom: 4px solid #555;
         }
         
         canvas { display: block; width: 100%; height: 100%; }
 
-        /* ZONA CONTROLLI (ALZATA ANCORA DI PIÙ) */
+        /* ZONA CONTROLLI (ALTA) */
         #controls-area {
-            height: 250px; /* Molto alto */
-            background: #111;
-            display: none; 
-            align-items: flex-start; 
-            justify-content: space-around;
-            padding: 20px 10px 80px 10px; /* 80px DI SPAZIO VUOTO SOTTO */
-            box-sizing: border-box;
+            height: 250px; background: #111; display: none; 
+            align-items: flex-start; justify-content: space-around;
+            padding: 20px 10px 80px 10px; box-sizing: border-box;
             border-top: 2px solid #333;
         }
 
-        /* PULSANTI GIGANTI */
         .big-btn {
-            width: 45%;
-            height: 120px;
-            border-radius: 25px;
-            border: 4px solid #555;
-            background: #2a2a2a;
-            color: #fff;
-            font-size: 40px;
-            font-weight: bold;
-            font-family: 'VT323', monospace;
+            width: 45%; height: 120px; border-radius: 25px;
+            border: 4px solid #555; background: #2a2a2a; color: #fff;
+            font-size: 40px; font-weight: bold; font-family: 'VT323', monospace;
             display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 10px 0 #000;
-            transition: transform 0.1s;
+            box-shadow: 0 10px 0 #000; transition: transform 0.1s;
         }
         .big-btn:active { transform: translateY(10px); box-shadow: none; background: #444; }
-        
         .btn-green { border-color: #00ff41; color: #00ff41; } 
         .btn-blue { border-color: #00ffff; color: #00ffff; } 
         
-        /* INTERFACCIA MENU */
+        /* MENU E UI */
         .ui-layer { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -85,12 +66,10 @@
         h1 { color: #ff5555; font-size: 40px; margin: 0 0 10px 0; font-family: 'VT323', monospace; text-transform: uppercase; letter-spacing: 2px; }
         p { color: #9aa0a6; font-size: 16px; max-width: 400px; margin-bottom: 30px; line-height: 1.4; }
 
-        /* CLASSIFICA */
         #leaderboard { 
             margin-top: 20px; width: 100%; max-width: 320px; 
             border: 1px solid #555; padding: 15px; border-radius: 8px; 
-            background: #000; 
-            min-height: 120px;
+            background: #000; min-height: 120px;
         }
         .lb-row { 
             display: flex; justify-content: space-between; 
@@ -99,7 +78,6 @@
         }
         .lb-row:first-child { color: #ffd700; }
 
-        /* ELEMENTI FORM */
         button.menu-btn { 
             background: #8ab4f8; color: #202124; border: none; 
             padding: 15px 50px; font-size: 28px; font-family: 'VT323', monospace;
@@ -119,16 +97,15 @@
         import { getDatabase, ref, push, query, orderByChild, limitToLast, onValue } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
 
         // ============================================================
-        // ⚠️ INCOLLA QUI SOTTO IL BLOCCO COPIATO DA FIREBASE CONSOLE ⚠️
+        // ⚠️ INCOLLA QUI LE TUE CHIAVI FIREBASE ⚠️
         // ============================================================
         const firebaseConfig = {
-          apiKey: "AIzaSyDbtLlpj1CDnzYwPkhg1UGSV5AJMImq_Uk",
-          authDomain: "laurea-ec890.firebaseapp.com",
-          databaseURL: "https://laurea-ec890-default-rtdb.europe-west1.firebasedatabase.app",
-          projectId: "laurea-ec890",
-          storageBucket: "laurea-ec890.firebasestorage.app",
-          messagingSenderId: "178551805840",
-          appId: "1:178551805840:web:6fe00130736417b9f78515"
+            apiKey: "INCOLLA_QUI",
+            authDomain: "TUO-PROGETTO.firebaseapp.com",
+            projectId: "TUO-PROGETTO",
+            storageBucket: "TUO-PROGETTO.appspot.com",
+            messagingSenderId: "NUMERO",
+            appId: "CODICE_APP"
         };
         // ============================================================
 
@@ -136,40 +113,36 @@
         try {
             const app = initializeApp(firebaseConfig);
             db = getDatabase(app);
-            console.log("Firebase collegato correttamenete");
         } catch (e) {
-            console.error("Firebase Error:", e);
             alert("Errore Configurazione Firebase: " + e.message);
         }
 
-        // SALVATAGGIO
+        // SALVATAGGIO (Corretto per ordinamento numerico)
         window.saveScoreToDb = function(name, score) {
             if(!db) return alert("Database non collegato! Controlla la config.");
             const btn = document.getElementById('btn-save');
             btn.innerText = "Salvataggio..."; 
             btn.disabled = true;
             
-            // Debug alert per capire cosa succede
-            console.log("Tentativo salvataggio per:", name, score);
+            // parseInt FORZA il salvataggio come NUMERO, non come Testo
+            const numericScore = parseInt(score, 10);
 
             push(ref(db, 'laurea_final'), { 
                 name: name, 
-                score: score, 
+                score: numericScore, 
                 date: Date.now() 
             })
             .then(() => {
-                alert("✅ Salvato!");
                 location.reload();
             })
             .catch((e) => { 
-                // Questo alert ti dirà esattamente qual è il problema
-                alert("❌ ERRORE: " + e.code + "\n" + e.message); 
+                alert("❌ ERRORE: " + e.code + "\nHai messo le Regole DB a true?"); 
                 btn.disabled = false; 
                 btn.innerText = "RIPROVA"; 
             });
         };
 
-        // CLASSIFICA
+        // CLASSIFICA (Ordinamento matematico garantito)
         window.loadLeaderboard = function() {
             if(!db) return;
             const list = document.getElementById('lb-list');
@@ -179,7 +152,9 @@
                 list.innerHTML = "";
                 let data = [];
                 snapshot.forEach(c => data.push(c.val()));
-                data.sort((a,b) => b.score - a.score); 
+                
+                // Ordina in modo strettamente matematico
+                data.sort((a,b) => parseInt(b.score) - parseInt(a.score)); 
                 
                 if(data.length === 0) list.innerHTML = "<div style='text-align:center'>Nessun record</div>";
                 
@@ -204,7 +179,7 @@
 
         <div id="start-screen" class="ui-layer">
             <h1>🎓 DINO RUN<br>LAUREA EDITION</h1>
-            <p>Schiva i problemi e prendi la laurea!</p>
+            <p>Non toccare i professori volanti, abbassati!</p>
             <button class="menu-btn" onclick="preStartGame()">INIZIA</button>
             <div id="leaderboard">
                 <div style="text-align:center; border-bottom:1px solid #555; margin-bottom:5px; color:#aaa;">TOP PLAYERS</div>
@@ -239,7 +214,6 @@
         const imgFace = new Image();
         imgFace.src = 'face_500x500.png';
 
-        // OTTIMIZZAZIONE GRAFICA (Alta qualità per la faccia)
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
 
@@ -263,14 +237,14 @@
                 osc.frequency.setValueAtTime(1200, audioCtx.currentTime);
                 gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
                 gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.1);
-            } else { // Die
+            } else { 
                 osc.type = 'sawtooth';
                 osc.frequency.setValueAtTime(200, audioCtx.currentTime);
                 osc.frequency.linearRampToValueAtTime(50, audioCtx.currentTime + 0.4);
                 gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
                 gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.4);
             }
-            osc.start(); osc.stop(audioCtx.currentTime + 0.1); // Stop corretto
+            osc.start(); osc.stop(audioCtx.currentTime + 0.1); 
         }
 
         function resize() {
@@ -280,24 +254,24 @@
         window.addEventListener('resize', resize);
         resize();
 
-        // LOGICA
+        // LOGICA GIOCO
         let gameRunning = false;
         let score = 0;
-        let speed = 7; // Più veloce all'inizio
+        let speed = 7; 
         let frame = 0;
 
+        // FISICA PIÙ FRENZETICA (Gravità aumentata)
         const DINO = {
             x: 50, y: 0,
             w: 44, h: 47,
             standH: 47, crouchH: 30,
-            dy: 0, gravity: 0.9, jumpForce: -15, 
+            dy: 0, gravity: 1.2, jumpForce: -16, 
             grounded: false, crouching: false
         };
         let dino = { ...DINO };
         let obstacles = [];
         let groundY = 0;
 
-        // AZIONI
         function doJump(e) {
             if(e) e.preventDefault();
             if(gameRunning && dino.grounded) {
@@ -324,7 +298,16 @@
             }
         }
 
-        // DISEGNO
+        // TASTIERA
+        window.addEventListener('keydown', (e) => {
+            if(e.code === 'Space' || e.code === 'ArrowUp') doJump();
+            if(e.code === 'ArrowDown') startCrouch();
+        });
+        window.addEventListener('keyup', (e) => {
+            if(e.code === 'ArrowDown') stopCrouch();
+        });
+
+        // DISEGNO DINO
         function drawDinoBody(x, y, w, h) {
             ctx.fillStyle = '#acacac';
             
@@ -354,10 +337,10 @@
                 }
             }
 
-            // TESTA (INGRANDITA DEL 50%)
-            let headSize = 50; // ERA 35
-            let headX = dino.crouching ? x + 45 : x + 15;
-            let headY = dino.crouching ? y - 10 : y - 25; // Spostata più in alto
+            // TESTA (GIGANTE)
+            let headSize = 55; // Testa più grande
+            let headX = dino.crouching ? x + 40 : x + 10;
+            let headY = dino.crouching ? y - 10 : y - 28;
 
             if(imgFace.complete && imgFace.naturalHeight !== 0) {
                 ctx.save();
@@ -418,7 +401,9 @@
             frame++;
             if(frame % 5 === 0) score++;
             if(score > 0 && score % 100 === 0 && score % 500 !== 0) playSound('score'); 
-            if(frame % 300 === 0) speed += 0.5;
+            
+            // ACCELERAZIONE COSTANTE (Aumenta ogni 200 frame)
+            if(frame % 200 === 0) speed += 0.5;
 
             // HUD
             ctx.fillStyle = '#acacac';
@@ -442,23 +427,22 @@
 
             drawDinoBody(dino.x, dino.y, dino.w, dino.h);
 
-            // OSTACOLI
-            let minGap = 200 + (speed * 18);
+            // OSTACOLI (Con Grace Period di 2 Secondi all'inizio)
+            let minGap = 150 + (speed * 12); // Spazio tra gli ostacoli ridotto
             let lastObs = obstacles[obstacles.length - 1];
             let dist = lastObs ? canvas.width - lastObs.x : Infinity;
 
-            if(dist > minGap) {
-                if(Math.random() < 0.03) {
+            if(frame > 120 && dist > minGap) { // PAUSA INIZIALE DI 120 FRAME
+                if(Math.random() < 0.04) {
                     let type = Math.random() > 0.6 ? 'bird' : 'cactus';
                     let w = type === 'cactus' ? 30 : 40;
-                    let h = type === 'cactus' ? 45 : 30;
+                    let h = type === 'cactus' ? 45 : 20;
                     let y = groundY - h;
                     
                     if(type === 'bird') {
-                        // UCCELLO PIÙ BASSO: IMPOSSIBILE SALTARE SOPRA
-                        // Altezza testa in piedi ~ groundY - 55
-                        // Uccello messo a groundY - 50 -> Ti colpisce la testa
-                        y = groundY - 55; 
+                        // UCCELLO: IMPOSSIBILE SALTARE. 
+                        // Visivamente è alto 20px, ma il gioco lo tratta come un "Muro infinito verso l'alto"
+                        y = groundY - 50; 
                     }
 
                     obstacles.push({ x: canvas.width, y: y, w: w, h: h, type: type });
@@ -481,18 +465,27 @@
                     ctx.fillRect(obs.x, obs.y+5, 10, 10);
                 }
 
-                // COLLISIONE MIGLIORATA
-                let pad = 8;
-                let dinoH = dino.crouching ? dino.crouchH : dino.standH;
+                // COLLISIONE CHIRURGICA
+                let pad = 6;
+                let dh = dino.crouching ? dino.crouchH : dino.standH;
                 
-                // Hitbox corpo + testa
-                if (dino.x + pad < obs.x + obs.w - pad &&
-                    dino.x + 40 - pad > obs.x + pad &&
-                    dino.y - 15 + pad < obs.y + obs.h - pad && // -15 per includere la testa
-                    dino.y + dinoH + 10 - pad > obs.y + pad) {
-                    
+                let dinoTop = dino.y + pad;
+                let dinoBottom = dino.y + dh + 10 - pad;
+                let dinoLeft = dino.x + pad;
+                let dinoRight = dino.x + 40 - pad;
+
+                let obsLeft = obs.x + pad;
+                let obsRight = obs.x + obs.w - pad;
+                
+                // Muro invisibile sopra l'uccello: se è bird, il suo top è 0 (cielo)
+                let obsTop = obs.type === 'bird' ? 0 : obs.y + pad; 
+                let obsBottom = obs.y + obs.h - pad;
+
+                if (dinoLeft < obsRight && dinoRight > obsLeft &&
+                    dinoTop < obsBottom && dinoBottom > obsTop) {
                     gameOver();
                 }
+                
                 if(obs.x + obs.w < 0) { obstacles.splice(i, 1); i--; }
             }
 
