@@ -25,7 +25,7 @@
         
         canvas { display: block; width: 100%; height: 100%; }
 
-        /* ZONA CONTROLLI (ALTA) */
+        /* ZONA CONTROLLI (ALTA E BEN DISTANZIATA DAL FONDO) */
         #controls-area {
             height: 250px; background: #111; display: none; 
             align-items: flex-start; justify-content: space-around;
@@ -96,18 +96,16 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
         import { getDatabase, ref, push, query, orderByChild, limitToLast, onValue } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
 
-        // ============================================================
-        // ⚠️ INCOLLA QUI LE TUE CHIAVI FIREBASE ⚠️
-        // ============================================================
+        // CONFIGURAZIONE DEFINITIVA
         const firebaseConfig = {
-            apiKey: "INCOLLA_QUI",
-            authDomain: "TUO-PROGETTO.firebaseapp.com",
-            projectId: "TUO-PROGETTO",
-            storageBucket: "TUO-PROGETTO.appspot.com",
-            messagingSenderId: "NUMERO",
-            appId: "CODICE_APP"
+            apiKey: "AIzaSyDbtLlpj1CDnzYwPkhg1UGSV5AJMImq_Uk",
+            authDomain: "laurea-ec890.firebaseapp.com",
+            databaseURL: "https://laurea-ec890-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "laurea-ec890",
+            storageBucket: "laurea-ec890.firebasestorage.app",
+            messagingSenderId: "178551805840",
+            appId: "1:178551805840:web:6fe00130736417b9f78515"
         };
-        // ============================================================
 
         let db;
         try {
@@ -117,14 +115,14 @@
             alert("Errore Configurazione Firebase: " + e.message);
         }
 
-        // SALVATAGGIO (Corretto per ordinamento numerico)
+        // SALVATAGGIO CLASSIFICA
         window.saveScoreToDb = function(name, score) {
             if(!db) return alert("Database non collegato! Controlla la config.");
             const btn = document.getElementById('btn-save');
             btn.innerText = "Salvataggio..."; 
             btn.disabled = true;
             
-            // parseInt FORZA il salvataggio come NUMERO, non come Testo
+            // Forza il salvataggio come NUMERO per la classifica
             const numericScore = parseInt(score, 10);
 
             push(ref(db, 'laurea_final'), { 
@@ -142,7 +140,7 @@
             });
         };
 
-        // CLASSIFICA (Ordinamento matematico garantito)
+        // CARICAMENTO CLASSIFICA
         window.loadLeaderboard = function() {
             if(!db) return;
             const list = document.getElementById('lb-list');
@@ -153,7 +151,7 @@
                 let data = [];
                 snapshot.forEach(c => data.push(c.val()));
                 
-                // Ordina in modo strettamente matematico
+                // Ordina in modo matematico (dal più alto al più basso)
                 data.sort((a,b) => parseInt(b.score) - parseInt(a.score)); 
                 
                 if(data.length === 0) list.innerHTML = "<div style='text-align:center'>Nessun record</div>";
@@ -212,6 +210,8 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const imgFace = new Image();
+        
+        // IL NOME DELLA TUA IMMAGINE
         imgFace.src = 'face_500x500.png';
 
         ctx.imageSmoothingEnabled = true;
@@ -244,7 +244,7 @@
                 gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
                 gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.4);
             }
-            osc.start(); osc.stop(audioCtx.currentTime + 0.1); 
+            osc.start(); osc.stop(audioCtx.currentTime + 0.4); 
         }
 
         function resize() {
@@ -260,7 +260,7 @@
         let speed = 7; 
         let frame = 0;
 
-        // FISICA PIÙ FRENZETICA (Gravità aumentata)
+        // FISICA
         const DINO = {
             x: 50, y: 0,
             w: 44, h: 47,
@@ -337,8 +337,8 @@
                 }
             }
 
-            // TESTA (GIGANTE)
-            let headSize = 55; // Testa più grande
+            // TESTA (GIGANTE, ALTA QUALITÀ)
+            let headSize = 55;
             let headX = dino.crouching ? x + 40 : x + 10;
             let headY = dino.crouching ? y - 10 : y - 28;
 
@@ -402,7 +402,7 @@
             if(frame % 5 === 0) score++;
             if(score > 0 && score % 100 === 0 && score % 500 !== 0) playSound('score'); 
             
-            // ACCELERAZIONE COSTANTE (Aumenta ogni 200 frame)
+            // ACCELERAZIONE
             if(frame % 200 === 0) speed += 0.5;
 
             // HUD
@@ -427,12 +427,12 @@
 
             drawDinoBody(dino.x, dino.y, dino.w, dino.h);
 
-            // OSTACOLI (Con Grace Period di 2 Secondi all'inizio)
-            let minGap = 150 + (speed * 12); // Spazio tra gli ostacoli ridotto
+            // OSTACOLI (Con pausa iniziale)
+            let minGap = 150 + (speed * 12); 
             let lastObs = obstacles[obstacles.length - 1];
             let dist = lastObs ? canvas.width - lastObs.x : Infinity;
 
-            if(frame > 120 && dist > minGap) { // PAUSA INIZIALE DI 120 FRAME
+            if(frame > 120 && dist > minGap) { 
                 if(Math.random() < 0.04) {
                     let type = Math.random() > 0.6 ? 'bird' : 'cactus';
                     let w = type === 'cactus' ? 30 : 40;
@@ -440,8 +440,7 @@
                     let y = groundY - h;
                     
                     if(type === 'bird') {
-                        // UCCELLO: IMPOSSIBILE SALTARE. 
-                        // Visivamente è alto 20px, ma il gioco lo tratta come un "Muro infinito verso l'alto"
+                        // UCCELLO: IMPOSSIBILE SALTARE SOPRA. Hitbox alta.
                         y = groundY - 50; 
                     }
 
@@ -465,7 +464,7 @@
                     ctx.fillRect(obs.x, obs.y+5, 10, 10);
                 }
 
-                // COLLISIONE CHIRURGICA
+                // COLLISIONE
                 let pad = 6;
                 let dh = dino.crouching ? dino.crouchH : dino.standH;
                 
@@ -477,7 +476,7 @@
                 let obsLeft = obs.x + pad;
                 let obsRight = obs.x + obs.w - pad;
                 
-                // Muro invisibile sopra l'uccello: se è bird, il suo top è 0 (cielo)
+                // Muro invisibile sopra l'uccello
                 let obsTop = obs.type === 'bird' ? 0 : obs.y + pad; 
                 let obsBottom = obs.y + obs.h - pad;
 
