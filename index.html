@@ -66,15 +66,13 @@
         h1 { color: #ff5555; font-size: 40px; margin: 0 0 10px 0; font-family: 'VT323', monospace; text-transform: uppercase; letter-spacing: 2px; }
         p { color: #9aa0a6; font-size: 16px; max-width: 400px; margin-bottom: 20px; line-height: 1.4; }
 
-        /* CLASSIFICA BOX (ORA SCROLLABILE PER TUTTI I GIOCATORI) */
+        /* CLASSIFICA SCROLLABILE */
         #leaderboard { 
             margin-top: 15px; width: 100%; max-width: 320px; 
             border: 1px solid #555; padding: 15px; border-radius: 8px; 
             background: #000; 
-            height: 200px; /* Altezza fissa */
-            overflow-y: auto; /* Abilita lo scorrimento */
+            height: 200px; overflow-y: auto;
         }
-        /* Stile Scrollbar per renderla carina */
         #leaderboard::-webkit-scrollbar { width: 8px; }
         #leaderboard::-webkit-scrollbar-thumb { background: #555; border-radius: 4px; }
         
@@ -126,7 +124,7 @@
 
         window.globalHighScore = 0;
 
-        // SALVATAGGIO LOGICA ARCADE (Push semplice)
+        // SALVATAGGIO LOGICA ARCADE
         window.saveScoreToDb = function(name, score) {
             if(!db) return alert("Database non collegato!");
             const btn = document.getElementById('btn-save');
@@ -136,14 +134,13 @@
             const numericScore = parseInt(score, 10);
             const cleanName = name.trim().toUpperCase();
 
-            // Usiamo laurea_party_scores per avere un DB pulito
             push(ref(db, 'laurea_party_scores'), { 
                 name: cleanName, 
                 score: numericScore, 
                 date: Date.now() 
             })
             .then(() => {
-                location.reload(); // Ricarica e mostra subito in classifica
+                location.reload(); 
             })
             .catch((e) => { 
                 alert("❌ ERRORE: " + e.code); 
@@ -152,17 +149,15 @@
             });
         };
 
-        // CARICAMENTO CLASSIFICA (Raggruppa e Mostra Tutti)
+        // CARICAMENTO CLASSIFICA
         window.loadLeaderboard = function() {
             if(!db) return;
             const list = document.getElementById('lb-list');
             
-            // Prendiamo tutti i record per estrarre i migliori di ciascuno
             const q = query(ref(db, 'laurea_party_scores'));
             onValue(q, (snapshot) => {
                 list.innerHTML = "";
                 
-                // Raggruppa i punteggi per nome
                 let bestScores = {};
                 snapshot.forEach(c => {
                     let entry = c.val();
@@ -172,24 +167,21 @@
                     }
                 });
 
-                // Trasforma in array e ordina
                 let uniqueData = Object.keys(bestScores).map(name => {
                     return { name: name, score: bestScores[name] };
                 });
                 
-                // Ordina dal più alto al più basso
                 uniqueData.sort((a,b) => b.score - a.score); 
                 
                 if(uniqueData.length === 0) {
                     list.innerHTML = "<div style='text-align:center; margin-top:20px;'>Nessun giocatore.<br>Sii il primo!</div>";
                     window.globalHighScore = 0;
                 } else {
-                    window.globalHighScore = uniqueData[0].score; // Record assoluto
+                    window.globalHighScore = uniqueData[0].score;
                     
                     uniqueData.forEach((entry, i) => {
                         const d = document.createElement('div');
                         d.className = 'lb-row';
-                        // Tronca i nomi troppo lunghi per non sballare la grafica
                         let n = entry.name.substring(0, 10);
                         d.innerHTML = `<span>${i+1}. ${n}</span><span>${entry.score}</span>`;
                         list.appendChild(d);
@@ -241,7 +233,6 @@
         const ctx = canvas.getContext('2d');
         const imgFace = new Image();
         
-        // FOTO 500x500 DA GITHUB
         imgFace.src = 'face_500x500.png';
 
         ctx.imageSmoothingEnabled = true;
@@ -296,8 +287,8 @@
             w: 44, h: 47,
             standH: 47, crouchH: 30,
             dy: 0, 
-            gravity: 1.5,     // AUMENTATA (cade come un sasso)
-            jumpForce: -18,   // AUMENTATA (schizza su forte)
+            gravity: 1.5,
+            jumpForce: -18,
             grounded: false, crouching: false
         };
         let dino = { ...DINO };
@@ -320,7 +311,6 @@
                 dino.h = dino.crouchH;
                 dino.y += (dino.standH - dino.crouchH);
             } else if (gameRunning && !dino.grounded) {
-                // Se preme GIÙ in aria, cade più velocemente (Fast Fall)
                 dino.dy += 10;
             }
         }
@@ -469,13 +459,13 @@
             if(frame > 150 && dist > minGap) { 
                 if(Math.random() < 0.04) {
                     let type = Math.random() > 0.6 ? 'bird' : 'cactus';
-                    let w = type === 'cactus' ? 30 : 60; 
-                    let h = type === 'cactus' ? 45 : 80; // UCCELLO GIGANTE IN VERTICALE
-                    let y = groundY - h;
+                    // CACTUS
+                    let w = 30; let h = 45; let y = groundY - h;
                     
                     if(type === 'bird') {
-                        // Altezza tale da costringerti fisicamente a schiacciarti a terra
-                        y = groundY - 100; 
+                        // UCCELLO RITOCCATO: POSIZIONATO PIÙ IN ALTO
+                        // Ora la base è a groundY - 65. Passi sotto solo se ti abbassi.
+                        w = 50; h = 40; y = groundY - 65;
                     }
 
                     obstacles.push({ x: canvas.width, y: y, w: w, h: h, type: type });
@@ -492,11 +482,11 @@
                     ctx.fillRect(obs.x, obs.y+10, 5, 15); 
                     ctx.fillRect(obs.x+25, obs.y+5, 5, 15); 
                 } else {
-                    // DISEGNO UCCELLO GIGANTE (Muro invalicabile)
-                    let wingY = (Math.floor(frame/8)%2===0) ? -20 : 15;
-                    ctx.fillRect(obs.x + 15, obs.y + 20, 45, 30); // Corpo gigante
-                    ctx.fillRect(obs.x + 25, obs.y + 15 + wingY, 25, 30); // Ala enorme
-                    ctx.fillRect(obs.x, obs.y + 10, 20, 20); // Testa grande
+                    // DISEGNO UCCELLO "BLOCCO VOLANTE"
+                    let wingY = (Math.floor(frame/8)%2===0) ? -10 : 5;
+                    ctx.fillRect(obs.x, obs.y, obs.w, obs.h); // Corpo solido
+                    ctx.fillRect(obs.x + 10, obs.y + 5 + wingY, 20, 10); // Ala
+                    ctx.fillRect(obs.x - 5, obs.y + 10, 10, 10); // Testa
                 }
 
                 // COLLISIONE CHIRURGICA
