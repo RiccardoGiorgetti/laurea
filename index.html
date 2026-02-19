@@ -25,7 +25,7 @@
         
         canvas { display: block; width: 100%; height: 100%; }
 
-        /* ZONA CONTROLLI (ALTA E BEN DISTANZIATA DAL FONDO) */
+        /* ZONA CONTROLLI (ALTA) */
         #controls-area {
             height: 250px; background: #111; display: none; 
             align-items: flex-start; justify-content: space-around;
@@ -90,13 +90,16 @@
         }
         input:focus { outline: none; border-color: #00ff41; }
         .hidden { display: none !important; }
+        
+        /* Debug test box */
+        #db-error { color: #ff5555; font-size: 14px; margin-top: 10px; font-family: monospace; max-width: 300px; word-wrap: break-word;}
     </style>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
         import { getDatabase, ref, push, query, orderByChild, limitToLast, onValue } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
 
-        // CONFIGURAZIONE DEFINITIVA
+        // CONFIGURAZIONE FORNITA DA TE
         const firebaseConfig = {
             apiKey: "AIzaSyDbtLlpj1CDnzYwPkhg1UGSV5AJMImq_Uk",
             authDomain: "laurea-ec890.firebaseapp.com",
@@ -112,17 +115,16 @@
             const app = initializeApp(firebaseConfig);
             db = getDatabase(app);
         } catch (e) {
-            alert("Errore Configurazione Firebase: " + e.message);
+            document.getElementById('db-error').innerText = "Errore Init: " + e.message;
         }
 
-        // SALVATAGGIO CLASSIFICA
+        // SALVATAGGIO
         window.saveScoreToDb = function(name, score) {
-            if(!db) return alert("Database non collegato! Controlla la config.");
+            if(!db) return alert("Database non inizializzato!");
             const btn = document.getElementById('btn-save');
             btn.innerText = "Salvataggio..."; 
             btn.disabled = true;
             
-            // Forza il salvataggio come NUMERO per la classifica
             const numericScore = parseInt(score, 10);
 
             push(ref(db, 'laurea_final'), { 
@@ -134,7 +136,8 @@
                 location.reload();
             })
             .catch((e) => { 
-                alert("❌ ERRORE: " + e.code + "\nHai messo le Regole DB a true?"); 
+                // STAMPA L'ERRORE ESATTO
+                alert("❌ IMPOSSIBILE SALVARE.\n\nCodice Errore: " + e.code + "\n\nMessaggio: " + e.message + "\n\nSe dice 'Permission denied', vai su Firebase -> REALTIME DATABASE (non Firestore) -> Regole -> metti true."); 
                 btn.disabled = false; 
                 btn.innerText = "RIPROVA"; 
             });
@@ -151,10 +154,9 @@
                 let data = [];
                 snapshot.forEach(c => data.push(c.val()));
                 
-                // Ordina in modo matematico (dal più alto al più basso)
                 data.sort((a,b) => parseInt(b.score) - parseInt(a.score)); 
                 
-                if(data.length === 0) list.innerHTML = "<div style='text-align:center'>Nessun record</div>";
+                if(data.length === 0) list.innerHTML = "<div style='text-align:center'>Nessuna giocata</div>";
                 
                 data.forEach((entry, i) => {
                     const d = document.createElement('div');
@@ -164,7 +166,7 @@
                     list.appendChild(d);
                 });
             }, (error) => {
-                list.innerHTML = `<div style='color:red; font-size:14px'>Err: ${error.code}</div>`;
+                list.innerHTML = `<div style='color:#ff5555; font-size:14px; text-align:center;'>ERRORE: ${error.code}.<br>Hai creato il Realtime DB?</div>`;
             });
         };
         loadLeaderboard();
@@ -177,12 +179,13 @@
 
         <div id="start-screen" class="ui-layer">
             <h1>🎓 DINO RUN<br>LAUREA EDITION</h1>
-            <p>Non toccare i professori volanti, abbassati!</p>
+            <p>Non farti bocciare: abbassati ai professori!</p>
             <button class="menu-btn" onclick="preStartGame()">INIZIA</button>
             <div id="leaderboard">
                 <div style="text-align:center; border-bottom:1px solid #555; margin-bottom:5px; color:#aaa;">TOP PLAYERS</div>
                 <div id="lb-list">Caricamento...</div>
             </div>
+            <div id="db-error"></div>
         </div>
 
         <div id="countdown-layer">
@@ -190,7 +193,7 @@
         </div>
 
         <div id="lose-screen" class="ui-layer hidden">
-            <h1 style="color:white">GAME OVER</h1>
+            <h1 style="color:white">BOCCIATO!</h1>
             <p style="font-size:50px; color:#00ff41; font-family:'VT323'; margin:10px;">SCORE: <span id="final-score">0</span></p>
             
             <input type="text" id="player-name" placeholder="IL TUO NOME" maxlength="10">
@@ -311,7 +314,6 @@
         function drawDinoBody(x, y, w, h) {
             ctx.fillStyle = '#acacac';
             
-            // CORPO
             if(dino.crouching) {
                 ctx.fillRect(x, y, 55, 30); 
                 ctx.fillRect(x-10, y+5, 10, 15); 
@@ -320,7 +322,6 @@
                 ctx.fillRect(x-8, y+10, 8, 20); 
             }
 
-            // GAMBE
             let legFrame = Math.floor(frame / 5) % 2;
             let legY = y + (dino.crouching ? 30 : 30);
             
@@ -337,7 +338,6 @@
                 }
             }
 
-            // TESTA (GIGANTE, ALTA QUALITÀ)
             let headSize = 55;
             let headX = dino.crouching ? x + 40 : x + 10;
             let headY = dino.crouching ? y - 10 : y - 28;
@@ -355,7 +355,7 @@
             }
         }
 
-        // COUNTDOWN
+        // COUNTDOWN E START
         function preStartGame() {
             document.getElementById('start-screen').classList.add('hidden');
             document.getElementById('controls-area').style.display = 'flex';
@@ -402,16 +402,13 @@
             if(frame % 5 === 0) score++;
             if(score > 0 && score % 100 === 0 && score % 500 !== 0) playSound('score'); 
             
-            // ACCELERAZIONE
             if(frame % 200 === 0) speed += 0.5;
 
-            // HUD
             ctx.fillStyle = '#acacac';
             ctx.font = "bold 28px 'VT323'";
             ctx.textAlign = "right";
             ctx.fillText("HI " + score.toString().padStart(5, '0'), canvas.width - 20, 40);
 
-            // FISICA
             if(!dino.grounded) {
                 dino.dy += dino.gravity;
                 dino.y += dino.dy;
@@ -427,7 +424,7 @@
 
             drawDinoBody(dino.x, dino.y, dino.w, dino.h);
 
-            // OSTACOLI (Con pausa iniziale)
+            // OSTACOLI
             let minGap = 150 + (speed * 12); 
             let lastObs = obstacles[obstacles.length - 1];
             let dist = lastObs ? canvas.width - lastObs.x : Infinity;
@@ -435,13 +432,14 @@
             if(frame > 120 && dist > minGap) { 
                 if(Math.random() < 0.04) {
                     let type = Math.random() > 0.6 ? 'bird' : 'cactus';
-                    let w = type === 'cactus' ? 30 : 40;
-                    let h = type === 'cactus' ? 45 : 20;
+                    let w = type === 'cactus' ? 30 : 50; // Uccello più largo
+                    let h = type === 'cactus' ? 45 : 55; // Uccello ENORME
                     let y = groundY - h;
                     
                     if(type === 'bird') {
-                        // UCCELLO: IMPOSSIBILE SALTARE SOPRA. Hitbox alta.
-                        y = groundY - 50; 
+                        // UCCELLO PIÙ ALTO E GRANDE: Se salti, sbatti matematicamente.
+                        // La base dell'uccello è a groundY - 85, la punta scende fino a groundY - 30
+                        y = groundY - 85; 
                     }
 
                     obstacles.push({ x: canvas.width, y: y, w: w, h: h, type: type });
@@ -458,13 +456,14 @@
                     ctx.fillRect(obs.x, obs.y+10, 5, 15); 
                     ctx.fillRect(obs.x+25, obs.y+5, 5, 15); 
                 } else {
-                    let wingY = (Math.floor(frame/10)%2===0) ? -10 : 0;
-                    ctx.fillRect(obs.x, obs.y+10, 40, 10);
-                    ctx.fillRect(obs.x+15, obs.y+5+wingY, 15, 8);
-                    ctx.fillRect(obs.x, obs.y+5, 10, 10);
+                    // DISEGNO UCCELLO GIGANTE (Muro visibile)
+                    let wingY = (Math.floor(frame/8)%2===0) ? -15 : 10;
+                    ctx.fillRect(obs.x + 10, obs.y + 20, 35, 15); // Corpo grosso
+                    ctx.fillRect(obs.x + 15, obs.y + 15 + wingY, 20, 20); // Ala grossa
+                    ctx.fillRect(obs.x, obs.y + 10, 15, 15); // Testa grossa
                 }
 
-                // COLLISIONE
+                // COLLISIONE (Ora il professore volante è ineluttabile)
                 let pad = 6;
                 let dh = dino.crouching ? dino.crouchH : dino.standH;
                 
@@ -476,9 +475,13 @@
                 let obsLeft = obs.x + pad;
                 let obsRight = obs.x + obs.w - pad;
                 
-                // Muro invisibile sopra l'uccello
-                let obsTop = obs.type === 'bird' ? 0 : obs.y + pad; 
+                // Muro invisibile totale sopra l'uccello: non si passa
+                let obsTop = obs.type === 'bird' ? -1000 : obs.y + pad; 
                 let obsBottom = obs.y + obs.h - pad;
+
+                // Hitbox della testa che sporge
+                let headTop = dino.crouching ? dino.y - 10 : dino.y - 28;
+                if(!dino.crouching) dinoTop = headTop; // Se sei in piedi, la testa becca l'uccello
 
                 if (dinoLeft < obsRight && dinoRight > obsLeft &&
                     dinoTop < obsBottom && dinoBottom > obsTop) {
