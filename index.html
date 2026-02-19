@@ -25,7 +25,7 @@
         
         canvas { display: block; width: 100%; height: 100%; }
 
-        /* ZONA CONTROLLI */
+        /* ZONA CONTROLLI (ALTA E BEN DISTANZIATA DAL FONDO) */
         #controls-area {
             height: 250px; background: #111; display: none; 
             align-items: flex-start; justify-content: space-around;
@@ -52,7 +52,7 @@
             padding: 20px; box-sizing: border-box; text-align: center;
         }
 
-        /* COUNTDOWN */
+        /* COUNTDOWN OVERLAY */
         #countdown-layer {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             display: none; align-items: center; justify-content: center;
@@ -66,18 +66,17 @@
         h1 { color: #ff5555; font-size: 40px; margin: 0 0 10px 0; font-family: 'VT323', monospace; text-transform: uppercase; letter-spacing: 2px; }
         p { color: #9aa0a6; font-size: 16px; max-width: 400px; margin-bottom: 30px; line-height: 1.4; }
 
-        /* CLASSIFICA BOX */
         #leaderboard { 
             margin-top: 20px; width: 100%; max-width: 320px; 
             border: 1px solid #555; padding: 15px; border-radius: 8px; 
-            background: #000; min-height: 150px;
+            background: #000; min-height: 120px;
         }
         .lb-row { 
             display: flex; justify-content: space-between; 
             color: #fff; font-family: 'VT323', monospace; font-size: 22px; 
-            margin-bottom: 5px; border-bottom: 1px dashed #333; padding-bottom: 5px;
+            margin-bottom: 5px; border-bottom: 1px solid #333;
         }
-        .lb-row:first-child { color: #ffd700; font-size: 24px; border-bottom: 1px solid #ffd700; }
+        .lb-row:first-child { color: #ffd700; }
 
         button.menu-btn { 
             background: #8ab4f8; color: #202124; border: none; 
@@ -95,21 +94,19 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getDatabase, ref, push, query, orderByChild, limitToLast, onValue } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+        // IMPORTANTE: Abbiamo aggiunto 'get' e 'set' per gestire i record personali
+        import { getDatabase, ref, set, get, query, orderByChild, limitToLast, onValue } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
 
-        // ============================================================
-        // ⚠️ INCOLLA QUI LE TUE CHIAVI FIREBASE ESATTE ⚠️
-        // ============================================================
+        // CONFIGURAZIONE
         const firebaseConfig = {
-          apiKey: "AIzaSyDbtLlpj1CDnzYwPkhg1UGSV5AJMImq_Uk",
-          authDomain: "laurea-ec890.firebaseapp.com",
-          databaseURL: "https://laurea-ec890-default-rtdb.europe-west1.firebasedatabase.app",
-          projectId: "laurea-ec890",
-          storageBucket: "laurea-ec890.firebasestorage.app",
-          messagingSenderId: "178551805840",
-          appId: "1:178551805840:web:6fe00130736417b9f78515"
+            apiKey: "AIzaSyDbtLlpj1CDnzYwPkhg1UGSV5AJMImq_Uk",
+            authDomain: "laurea-ec890.firebaseapp.com",
+            databaseURL: "https://laurea-ec890-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "laurea-ec890",
+            storageBucket: "laurea-ec890.firebasestorage.app",
+            messagingSenderId: "178551805840",
+            appId: "1:178551805840:web:6fe00130736417b9f78515"
         };
-        // ============================================================
 
         let db;
         try {
@@ -119,30 +116,57 @@
             alert("Errore Configurazione Firebase: " + e.message);
         }
 
-        // Variabile globale per mostrare il Record in gioco
         window.globalHighScore = 0;
 
-        // SALVATAGGIO
+        // NUOVA LOGICA DI SALVATAGGIO INTELLIGENTE
         window.saveScoreToDb = function(name, score) {
-            if(!db) return alert("Database non collegato! Controlla la config.");
+            if(!db) return alert("Database non collegato!");
             const btn = document.getElementById('btn-save');
             btn.innerText = "Salvataggio..."; 
             btn.disabled = true;
             
             const numericScore = parseInt(score, 10);
+            const cleanName = name.trim().toUpperCase();
+            // Firebase non accetta alcuni simboli come chiave, li ripuliamo
+            const safeKey = cleanName.replace(/[.#$\[\]]/g, "_");
 
-            push(ref(db, 'laurea_final'), { 
-                name: name, 
-                score: numericScore, 
-                date: Date.now() 
-            })
-            .then(() => {
-                location.reload();
-            })
-            .catch((e) => { 
-                alert("❌ ERRORE: " + e.code); 
-                btn.disabled = false; 
-                btn.innerText = "RIPROVA"; 
+            // Riferimento al giocatore specifico
+            const playerRef = ref(db, 'laurea_final/' + safeKey);
+
+            // Prima controlliamo se esiste già un record per questo nome
+            get(playerRef).then((snapshot) => {
+                let shouldSave = true;
+                
+                if (snapshot.exists()) {
+                    const oldScore = snapshot.val().score;
+                    // Se il nuovo punteggio è minore o uguale al vecchio, non salviamo
+                    if (numericScore <= oldScore) {
+                        shouldSave = false;
+                    }
+                }
+
+                if (shouldSave) {
+                    // SET = Crea o sovrascrive esattamento quel nodo
+                    set(playerRef, { 
+                        name: cleanName, 
+                        score: numericScore, 
+                        date: Date.now() 
+                    })
+                    .then(() => location.reload())
+                    .catch((e) => { 
+                        alert("❌ ERRORE DB: " + e.message); 
+                        btn.disabled = false; 
+                        btn.innerText = "RIPROVA"; 
+                    });
+                } else {
+                    // Record non battuto, facciamo solo il reload
+                    alert("Non hai battuto il tuo record precedente! Riprova.");
+                    location.reload();
+                }
+            }).catch((e) => {
+                alert("❌ ERRORE LETTURA: " + e.message);
+                btn.disabled = false;
+                btn.innerText = "SALVA RECORD";
             });
         };
 
@@ -157,21 +181,20 @@
                 let data = [];
                 snapshot.forEach(c => data.push(c.val()));
                 
-                // Ordina matematicamente
+                // Ordina matematicamente (dal più alto al più basso)
                 data.sort((a,b) => parseInt(b.score) - parseInt(a.score)); 
                 
                 if(data.length === 0) {
-                    list.innerHTML = "<div style='text-align:center'>Ancora nessun giocatore!</div>";
+                    list.innerHTML = "<div style='text-align:center'>Nessun giocatore in classifica</div>";
                     window.globalHighScore = 0;
                 } else {
-                    // Aggiorna il record globale per la schermata di gioco
                     window.globalHighScore = data[0].score;
                     
                     data.forEach((entry, i) => {
                         const d = document.createElement('div');
                         d.className = 'lb-row';
-                        let n = entry.name ? entry.name.substring(0, 8).toUpperCase() : "ANON";
-                        d.innerHTML = `<span>${i+1}.${n}</span><span>${entry.score}</span>`;
+                        let n = entry.name ? entry.name.substring(0, 8) : "ANON";
+                        d.innerHTML = `<span>${i+1}. ${n}</span><span>${entry.score}</span>`;
                         list.appendChild(d);
                     });
                 }
@@ -410,11 +433,10 @@
             
             if(frame % 200 === 0) speed += 0.5;
 
-            // HUD PUNTEGGIO: Record Globale a sinistra, Punteggio attuale a destra
+            // HUD PUNTEGGIO
             ctx.fillStyle = '#acacac';
             ctx.font = "bold 28px 'VT323'";
             ctx.textAlign = "right";
-            // Prende il record globale salvato in loadLeaderboard
             let hiStr = (window.globalHighScore > score ? window.globalHighScore : score).toString().padStart(5, '0');
             let scStr = score.toString().padStart(5, '0');
             ctx.fillText("HI " + hiStr + "  " + scStr, canvas.width - 20, 40);
