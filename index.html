@@ -66,12 +66,12 @@
         h1 { color: #ff5555; font-size: 40px; margin: 0 0 10px 0; font-family: 'VT323', monospace; text-transform: uppercase; letter-spacing: 2px; }
         p { color: #9aa0a6; font-size: 16px; max-width: 400px; margin-bottom: 20px; line-height: 1.4; }
 
-        /* CLASSIFICA SCROLLABILE */
+        /* CLASSIFICA BOX (ORA SCROLLABILE PER TUTTI I GIOCATORI) */
         #leaderboard { 
             margin-top: 15px; width: 100%; max-width: 320px; 
             border: 1px solid #555; padding: 15px; border-radius: 8px; 
             background: #000; 
-            height: 200px; overflow-y: auto;
+            height: 200px; overflow-y: auto; 
         }
         #leaderboard::-webkit-scrollbar { width: 8px; }
         #leaderboard::-webkit-scrollbar-thumb { background: #555; border-radius: 4px; }
@@ -124,7 +124,7 @@
 
         window.globalHighScore = 0;
 
-        // SALVATAGGIO LOGICA ARCADE
+        // SALVATAGGIO
         window.saveScoreToDb = function(name, score) {
             if(!db) return alert("Database non collegato!");
             const btn = document.getElementById('btn-save');
@@ -233,6 +233,7 @@
         const ctx = canvas.getContext('2d');
         const imgFace = new Image();
         
+        // FOTO DA GITHUB
         imgFace.src = 'face_500x500.png';
 
         ctx.imageSmoothingEnabled = true;
@@ -287,8 +288,8 @@
             w: 44, h: 47,
             standH: 47, crouchH: 30,
             dy: 0, 
-            gravity: 1.5,
-            jumpForce: -18,
+            gravity: 1.5, 
+            jumpForce: -18, 
             grounded: false, crouching: false
         };
         let dino = { ...DINO };
@@ -311,6 +312,7 @@
                 dino.h = dino.crouchH;
                 dino.y += (dino.standH - dino.crouchH);
             } else if (gameRunning && !dino.grounded) {
+                // Se preme GIÙ in aria, cade più velocemente (Fast Fall)
                 dino.dy += 10;
             }
         }
@@ -423,7 +425,7 @@
             if(frame % 5 === 0) score++;
             if(score > 0 && score % 100 === 0 && score % 500 !== 0) playSound('score'); 
             
-            // ACCELERAZIONE COSTANTE (Aumenta ogni 200 frame)
+            // ACCELERAZIONE COSTANTE 
             if(frame % 200 === 0) speed += 0.5;
 
             // HUD
@@ -450,22 +452,21 @@
 
             drawDinoBody(dino.x, dino.y, dino.w, dino.h);
 
-            // OSTACOLI (TEMPO DI CADUTA AUMENTATO)
+            // OSTACOLI
             let minGap = 150 + (speed * 12); 
             let lastObs = obstacles[obstacles.length - 1];
             let dist = lastObs ? canvas.width - lastObs.x : Infinity;
 
-            // frame > 150 = 2 secondi e mezzo prima del primo ostacolo
             if(frame > 150 && dist > minGap) { 
                 if(Math.random() < 0.04) {
                     let type = Math.random() > 0.6 ? 'bird' : 'cactus';
-                    // CACTUS
-                    let w = 30; let h = 45; let y = groundY - h;
+                    let w = type === 'cactus' ? 30 : 40; 
+                    let h = type === 'cactus' ? 45 : 30; 
+                    let y = groundY - h;
                     
                     if(type === 'bird') {
-                        // UCCELLO RITOCCATO: POSIZIONATO PIÙ IN ALTO
-                        // Ora la base è a groundY - 65. Passi sotto solo se ti abbassi.
-                        w = 50; h = 40; y = groundY - 65;
+                        // UCCELLO ALTO ESATTO PER L'ABBASAMENTO
+                        y = groundY - 75; 
                     }
 
                     obstacles.push({ x: canvas.width, y: y, w: w, h: h, type: type });
@@ -482,14 +483,14 @@
                     ctx.fillRect(obs.x, obs.y+10, 5, 15); 
                     ctx.fillRect(obs.x+25, obs.y+5, 5, 15); 
                 } else {
-                    // DISEGNO UCCELLO "BLOCCO VOLANTE"
-                    let wingY = (Math.floor(frame/8)%2===0) ? -10 : 5;
-                    ctx.fillRect(obs.x, obs.y, obs.w, obs.h); // Corpo solido
-                    ctx.fillRect(obs.x + 10, obs.y + 5 + wingY, 20, 10); // Ala
-                    ctx.fillRect(obs.x - 5, obs.y + 10, 10, 10); // Testa
+                    // L'UCCELLO "BELLO" DI PRIMA
+                    let wingY = (Math.floor(frame/10)%2===0) ? -10 : 0;
+                    ctx.fillRect(obs.x, obs.y+10, 40, 10); // Corpo
+                    ctx.fillRect(obs.x+15, obs.y+5+wingY, 15, 8); // Ala
+                    ctx.fillRect(obs.x, obs.y+5, 10, 10); // Testa
                 }
 
-                // COLLISIONE CHIRURGICA
+                // COLLISIONE
                 let pad = 6;
                 let dh = dino.crouching ? dino.crouchH : dino.standH;
                 
